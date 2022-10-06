@@ -1,0 +1,34 @@
+{% include 'top.html' %}
+<div id="content">
+    <h1 class="page-title">{{ session.name }}'s Transcript</h1>
+    <table class="pure-table">
+        <thead>
+            <tr><th>UOS Code</th><th>UOS Name</th><th>Credits</th><th>Year</th><th>Semester</th><th>Grade</th></tr>
+        </thead>
+        <tbody>
+            <!-- TODO
+                Files you will look at:
+                    - database.py (perform the SQL query)
+                    - main.py (get the rendering working)
+                    - units.html [as an example, you'll be doing something similar ;) ]
+
+                SELECT uosCode, uosName, credits, year, semester
+                        FROM UniDB.UoSOffering JOIN UniDB.UnitOfStudy USING (uosCode)
+                        ORDER BY uosCode, year, semester
+
+            -->
+            {% for uos in transcript %}
+                    <tr>
+						<td> {{uos[0]}}</td>
+                        <td> {{uos[1]}} </td>
+                        <td> {{uos[2]}} </td>
+                        <td> {{uos[3]}} </td>
+                        <td> {{uos[4]}} </td>
+                        <td> {{uos[5]}} </td>
+                    </tr>
+           {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
