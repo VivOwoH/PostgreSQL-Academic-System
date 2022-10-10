@@ -1,10 +1,10 @@
 # ISYS2120
 Groups we need to implement:
 - classrooms (Campbell)
-- academic staff (Hasin)
+- academic staff (Negeen)
 - prerequisites (Vivian)
-- lecture locations () 
-- textbooks ()
+- lecture locations (Aryan) 
+- textbooks (Hasin)
 
 ## !! Extension (must do)
 - extra functionality that extends schema by adding some new tables; and the functionality that uses these tables
