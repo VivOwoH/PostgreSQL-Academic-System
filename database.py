@@ -180,7 +180,7 @@ def list_prerequisites():
 # Lectures
 ################################################################################
 
-def lectures():
+def lectures(func):
     # Get the database connection and set up the cursor
     conn = database_connect()
     if(conn is None):
@@ -189,11 +189,17 @@ def lectures():
     cur = conn.cursor()
     val = None
     try:
-        cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
-                        FROM unidb.lecture
-                        JOIN unidb.unitofstudy 
-                        USING (uoscode)""")
-        val = cur.fetchall()
+        if func == "list":
+            cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
+                            FROM unidb.lecture
+                            JOIN unidb.unitofstudy 
+                            USING (uoscode)""")
+            val = cur.fetchall()
+        if func == "count":
+            cur.execute("""SELECT classroomid, COUNT(*) 
+                            FROM unidb.lecture
+                            GROUP BY classroomid""")
+            val = cur.fetchall()
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
         print("Error fetching from database {}".format(e))
