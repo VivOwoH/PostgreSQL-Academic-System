@@ -176,6 +176,31 @@ def list_prerequisites():
     conn.close()                    # Close the connection to the db
     return val
 
+################################################################################
+# Lectures
+################################################################################
+
+def lectures():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if(conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
+                        FROM unidb.lecture
+                        JOIN unidb.unitofstudy 
+                        USING (uoscode)""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
 
 #####################################################
 #  Python code if you run it on it's own as 2tier

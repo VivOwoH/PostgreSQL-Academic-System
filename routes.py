@@ -142,3 +142,20 @@ def list_prerequisites():
         flash('Error, there are no prerequisites')
     page['title'] = 'Prerequisites'
     return render_template('prerequisites.html', page=page, session=session, prerequisites=prerequisites)
+
+################################################################################
+# Lectures
+################################################################################
+
+# List lectures
+@app.route('/lectures')
+def lectures():
+    # Go into the database file and get the list_prerequisites() function
+    lectures = database.lectures()
+
+    if (lectures is None):
+        # Set it to an empty list and show error message
+        lectures = []
+        flash('Error, there are no lectures')
+    page['title'] = 'Lectures'
+    return render_template('lectures.html', page=page, session=session, lectures=lectures)
