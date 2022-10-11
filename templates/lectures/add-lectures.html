@@ -1,7 +1,7 @@
 {% include 'top.html' %}
 <div id="content">
     <div id="container">
-        <h1 class="page-title">Lectures</h1>
+        <h1 class="page-title">Add Lectures</h1>
         <table class="pure-table">
             <thead>
                 <tr><th>UOS Code</th><th>UOS Name</th><th>Semester</th><th>Year</th><th>Classtime</th><th>Classroom ID</th></tr>
@@ -9,7 +9,7 @@
             <tbody>
                 {% for lecture in lectures %}
                     <tr>
-						<td> {{lecture[0]}}</td>
+						<td> {{lecture[0]}} </td>
                         <td> {{lecture[1]}} </td>
                         <td> {{lecture[2]}} </td>
                         <td> {{lecture[3]}} </td>
@@ -18,6 +18,25 @@
                     </tr>
                 {% endfor %}
             </tbody>
+        </table>
+        <h1 class="page-title">Add New Lecture</h1>
+        <table>
+            <tbody>
+                <form action="{{ url_for('add_lectures', code=code, sem=sem, year=year, time=time, id=id) }}">
+                    <label for="code">UOS Code:</label>
+                    <input type="text" id="code" name="code">
+                    <label for="sem">Semester:</label>
+                    <input type="text" id="sem" name="sem">
+                    <label for="year">Year:</label>
+                    <input type="text" id="year" name="year">
+                    <label for="time">Class Time:</label>
+                    <input type="text" id="time" name="time">
+                    <label for="id">Classroom ID:</label>
+                    <input type="text" id="id" name="id">
+                    <button type="submit">Submit</button>
+                </form>
+            </tbody>
+            </form>
         </table>
     </div>
 </div>

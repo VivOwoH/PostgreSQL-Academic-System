@@ -189,30 +189,64 @@ def lectures(func, **kwargs):
     cur = conn.cursor()
     val = None
     try:
+
         if func == "list":
             cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy 
                             USING (uoscode)""")
             val = cur.fetchall()
+
         if func == "count":
             cur.execute("""SELECT classroomid, COUNT(*) 
                             FROM unidb.lecture
-                            GROUP BY classroomid""")
+                            GROUP BY classroomid
+                            ORDER BY COUNT(*) 
+                            DESC""")
             val = cur.fetchall()
+
         if func == "search":
             time = kwargs['time']
             if time != "" and time is not None:
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy USING (uoscode)
-                            WHERE classtime LIKE %s
-                        """, (time, ))
+                            WHERE classtime LIKE %s""", 
+                            (time, ))
             else:
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
-                            JOIN unidb.unitofstudy USING (uoscode)""")
+                            JOIN unidb.unitofstudy 
+                            USING (uoscode)""")
             val = cur.fetchall()
+
+        if func == "add":
+            flag = True
+            for k, v in kwargs.items():
+                if kwargs[k] is None or kwargs[k] == "":
+                    flag = False
+            if flag == True:
+                code = kwargs['code']
+                sem = kwargs['sem']
+                year = kwargs['year']
+                time = kwargs['time']
+                id = kwargs['id']
+                cur.execute("""INSERT INTO lecture 
+                                VALUES (
+                                    %s
+                                    %s
+                                    %s
+                                    %s
+                                    %s
+                                )""", 
+                            (code, sem, year, time, id))
+            else:
+                cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
+                            FROM unidb.lecture
+                            JOIN unidb.unitofstudy 
+                            USING (uoscode)""")
+            val = cur.fetchall()
+
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
         print("Error fetching from database {}".format(e))

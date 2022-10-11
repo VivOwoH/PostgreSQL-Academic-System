@@ -174,8 +174,14 @@ def count_lectures():
 # Add lectures
 @app.route('/lectures/add-lectures')
 def add_lectures():
-    # Go into the database file and get the list_prerequisites() function
-    lectures = database.lectures("add")
+    dict = {
+        'code':request.args.get('code'),
+        'sem':request.args.get('sem'),
+        'year':request.args.get('year'),
+        'time':request.args.get('time'),
+        'id':request.args.get('id')
+        }
+    lectures = database.lectures("add", **dict)
 
     if (lectures is None):
         # Set it to an empty list and show error message
