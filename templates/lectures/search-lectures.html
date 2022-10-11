@@ -1,7 +1,21 @@
 {% include 'top.html' %}
 <div id="content">
     <div id="container">
-        <h1 class="page-title">Lectures</h1>
+        <h1 class="page-title">Search Lectures</h1>
+        
+        <!-- <select name="class">
+            <option value="volvo">Volvo</option>
+            <option value="saab">Saab</option>
+            <option value="mercedes">Mercedes</option>
+            <option value="audi">Audi</option>
+        </select> -->
+
+        <form action="{{ url_for('search_lectures', time=time) }}">
+            <label for="time">Search Class Time:</label>
+            <input type="text" id="time" name="time">
+            <button type="submit">Submit</button>
+        </form>
+
         <table class="pure-table">
             <thead>
                 <tr><th>UOS Code</th><th>UOS Name</th><th>Semester</th><th>Year</th><th>Classtime</th><th>Classroom ID</th></tr>

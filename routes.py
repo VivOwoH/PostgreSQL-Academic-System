@@ -149,8 +149,7 @@ def list_prerequisites():
 
 # List lectures
 @app.route('/lectures/list-lectures')
-def lectures():
-    # Go into the database file and get the list_prerequisites() function
+def list_lectures():
     lectures = database.lectures("list")
 
     if (lectures is None):
@@ -163,7 +162,6 @@ def lectures():
 # Count lectures
 @app.route('/lectures/count-lectures')
 def count_lectures():
-    # Go into the database file and get the list_prerequisites() function
     lectures = database.lectures("count")
 
     if (lectures is None):
@@ -173,31 +171,30 @@ def count_lectures():
     page['title'] = 'Count Lectures'
     return render_template('/lectures/count-lectures.html', page=page, session=session, lectures=lectures)
 
-# # Add lectures
-# @app.route('/lectures')
-# def add_lectures():
-#     # Go into the database file and get the list_prerequisites() function
-#     lectures = database.lectures("add")
+# Add lectures
+@app.route('/lectures/add-lectures')
+def add_lectures():
+    # Go into the database file and get the list_prerequisites() function
+    lectures = database.lectures("add")
 
-#     if (lectures is None):
-#         # Set it to an empty list and show error message
-#         lectures = []
-#         flash('Error, there are no lectures')
-#     page['title'] = 'Lectures'
-#     return render_template('/lectures/add-lectures.html', page=page, session=session, lectures=lectures)
+    if (lectures is None):
+        # Set it to an empty list and show error message
+        lectures = []
+        flash('Error, there are no lectures')
+    page['title'] = 'Lectures'
+    return render_template('/lectures/add-lectures.html', page=page, session=session, lectures=lectures)
 
-# # Search lectures
-# @app.route('/lectures')
-# def search_lectures():
-#     # Go into the database file and get the list_prerequisites() function
-#     lectures = database.lectures("search")
-
-#     if (lectures is None):
-#         # Set it to an empty list and show error message
-#         lectures = []
-#         flash('Error, there are no lectures')
-#     page['title'] = 'Lectures'
-#     return render_template('/lectures/search-lectures.html', page=page, session=session, lectures=lectures)
+# Search lectures
+@app.route('/lectures/search-lectures')
+def search_lectures():    
+    time = {'time':request.args.get('time')}
+    lectures = database.lectures('search', **time)
+    if (lectures is None):
+        # Set it to an empty list and show error message
+        lectures = []
+        flash('Error, there are no lectures')
+    page['title'] = 'Lectures'
+    return render_template('/lectures/search-lectures.html', page=page, session=session, lectures=lectures)
 
 ################################################################################
 # 

@@ -180,7 +180,7 @@ def list_prerequisites():
 # Lectures
 ################################################################################
 
-def lectures(func):
+def lectures(func, **kwargs):
     # Get the database connection and set up the cursor
     conn = database_connect()
     if(conn is None):
@@ -199,6 +199,19 @@ def lectures(func):
             cur.execute("""SELECT classroomid, COUNT(*) 
                             FROM unidb.lecture
                             GROUP BY classroomid""")
+            val = cur.fetchall()
+        if func == "search":
+            time = kwargs['time']
+            if time != "" and time is not None:
+                cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
+                            FROM unidb.lecture
+                            JOIN unidb.unitofstudy USING (uoscode)
+                            WHERE classtime LIKE %s
+                        """, (time, ))
+            else:
+                cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
+                            FROM unidb.lecture
+                            JOIN unidb.unitofstudy USING (uoscode)""")
             val = cur.fetchall()
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
