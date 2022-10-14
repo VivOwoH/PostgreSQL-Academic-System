@@ -127,7 +127,7 @@ def list_units():
     return render_template('units.html', page=page, session=session, units=units)
 
 ################################################################################
-# List Prerequisites page
+# Prerequisites page
 ################################################################################
 
 # List the prerequisite units
@@ -139,6 +139,35 @@ def list_prerequisites():
     if (prerequisites is None):
         # Set it to an empty list and show error message
         prerequisites = []
-        flash('Error, there are no prerequisites')
+        flash('There are no prerequisites')
     page['title'] = 'Prerequisites'
-    return render_template('prerequisites.html', page=page, session=session, prerequisites=prerequisites)
+    return render_template('prerequisites/prerequisites.html', page=page, 
+                        session=session, prerequisites=prerequisites)
+
+# Seach for all prerequisites of a unit
+@app.route('/search-prerequisites', methods=['POST', 'GET'])
+def search_prerequisites():
+    prerequisites = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        prerequisites = database.search_prerequisites(request.form['uoscode'])
+        print(request.form['uoscode'])
+
+        # If our database connection gave back code -1
+        if(prerequisites == -1):
+            flash("We cannot find this unit. Check the list below for available unit.")
+            return redirect(url_for('list_units'))
+
+        else: # include none situation because a unit can have no prerequisites
+            if (prerequisites is None):
+                # Set it to an empty list and show error message
+                prerequisites = []
+                flash('There are no prerequisites for the given unit')
+            page['title'] = 'Search prerequisites'
+            return render_template('prerequisites/searchPrerequisites.html', page=page, 
+                                    session=session, prerequisites=prerequisites)
+    else:
+        page['title'] = 'Search prerequisites'
+        return render_template('prerequisites/searchPrerequisites.html', page=page, 
+                                    session=session, prerequisites=prerequisites)

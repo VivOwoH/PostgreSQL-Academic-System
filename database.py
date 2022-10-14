@@ -57,7 +57,7 @@ def database_connect():
 def check_login(sid, pwd):
     # Ask for the database connection, and get the cursor set up
     conn = database_connect()
-    if(conn is None):
+    if (conn is None):
         return None
     cur = conn.cursor()
     try:
@@ -88,7 +88,7 @@ def check_login(sid, pwd):
 def list_units():
     # Get the database connection and set up the cursor
     conn = database_connect()
-    if(conn is None):
+    if (conn is None):
         return None
     # Sets up the rows as a dictionary
     cur = conn.cursor()
@@ -125,7 +125,7 @@ def get_transcript(sid):
     # You're given an SID as a variable 'sid'
     # Return the results of your query :)
     conn = database_connect()
-    if(conn is None):
+    if (conn is None):
         return None
     # Sets up the rows as a dictionary
     cur = conn.cursor()
@@ -146,14 +146,18 @@ def get_transcript(sid):
 
 
 ################################################################################
-# List Prerequisites
+# Prerequisites
 #   1. UoSCodes	and	names of the two units,	and enforce date
+#   2. Allow user to search for all the units which are prerequisites of a given unit.
+#   3. Produce a report showing how many prerequisites there are, for each unit of study
+#   4. Allow user to add a new (prerequities, unit) pair to the dataset
 ################################################################################
 
+#   1. UoSCodes	and	names of the two units,	and enforce date
 def list_prerequisites():
     # Get the database connection and set up the cursor
     conn = database_connect()
-    if(conn is None):
+    if (conn is None):
         return None
     # Sets up the rows as a dictionary
     cur = conn.cursor()
@@ -175,6 +179,52 @@ def list_prerequisites():
     cur.close()                     # Close the cursor
     conn.close()                    # Close the connection to the db
     return val
+
+
+#   2. Allow user to search for all the units which are prerequisites of a given unit.
+def search_prerequisites(uoscode):
+    # Only search using uoscode: case insensitive
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT uoscode 
+                        FROM UniDB.UnitOfStudy
+                        WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
+        val = cur.fetchall()
+        if val is None or len(val) < 1:
+            val = -1
+            return val # we cannot find this given unit
+
+        cur.execute("""SELECT prerequoscode, B.uosname as prerequosname, enforcedsince
+                        FROM UniDB.Requires A JOIN UniDB.UnitOfStudy B ON (prerequoscode=B.uoscode)
+                        WHERE LOWER(A.uoscode) = LOWER(%s)""", (uoscode,))
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+
+# #   3. Produce a report showing how many prerequisites there are, for each unit of study
+# """SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
+#     FROM UniDB.Requires
+#     GROUP BY uoscode
+# """
+
+# #   4. Allow user to add a new (prerequities, unit) pair to the dataset
+# # added unit must be in unitOfStudy table already
+# """INSERT INTO UniDB.Requires
+#     VALUES ('ISYS2120', 'INFO1113', CURRENT_DATE)
+# """
 
 
 #####################################################

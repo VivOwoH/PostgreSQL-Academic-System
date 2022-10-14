@@ -1,0 +1,31 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Search prerequisites</h1>
+
+        <form class="pure-form pure-form-stacked login" method="POST" action="{{ url_for('search_prerequisites') }}">
+            <h4>Search prerequisites of a unit:</h4>
+            <h5>Note: Given unit must be in the list of UOSs<h5>
+            <input type="text" name="uoscode" placeholder="UOS code" required>
+            <input class="pure-button pure-button-primary" type="submit">
+        </form>
+        <br></br>
+        
+        <table class="pure-table">
+            <thead>
+                <tr><th>Prerequisite Code</th><th>UOS Name</th><th>Enforced Since</th></tr>
+            </thead>
+            <tbody>
+                {% for prerequisite in prerequisites %}
+                    <tr>
+						<td> {{prerequisite[0]}}</td>
+                        <td> {{prerequisite[1]}} </td>
+                        <td> {{prerequisite[2]}} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
