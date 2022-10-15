@@ -198,8 +198,7 @@ def search_prerequisites(uoscode):
                         WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
         val = cur.fetchall()
         if val is None or len(val) < 1:
-            val = -1
-            return val # we cannot find this given unit
+            return -1 # we cannot find this given unit
 
         cur.execute("""SELECT prerequoscode, B.uosname as prerequosname, enforcedsince
                         FROM UniDB.Requires A JOIN UniDB.UnitOfStudy B ON (prerequoscode=B.uoscode)
@@ -214,17 +213,52 @@ def search_prerequisites(uoscode):
     return val
 
 
-# #   3. Produce a report showing how many prerequisites there are, for each unit of study
-# """SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
-#     FROM UniDB.Requires
-#     GROUP BY uoscode
-# """
+#   3. Produce a report showing how many prerequisites there are, for each unit of study
+def report_prerequisites():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
+                        FROM UniDB.Requires
+                        GROUP BY uoscode""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
 
-# #   4. Allow user to add a new (prerequities, unit) pair to the dataset
-# # added unit must be in unitOfStudy table already
-# """INSERT INTO UniDB.Requires
-#     VALUES ('ISYS2120', 'INFO1113', CURRENT_DATE)
-# """
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+
+#   4. Allow user to add a new (prerequities, unit) pair to the dataset
+# (uoscode, prereqcode) -> must be in unitOfStudy table already
+def add_prerequisites(uos, prereq):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""INSERT INTO UniDB.Requires
+                        VALUES (%s, %s, CURRENT_DATE) 
+                        RETURNING uoscode, prerequoscode""", (uos, prereq))
+        val = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
 
 
 #####################################################

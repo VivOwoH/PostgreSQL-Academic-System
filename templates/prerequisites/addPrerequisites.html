@@ -1,0 +1,16 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Add prerequisites</h1>
+
+        <form class="pure-form pure-form-stacked login" method="POST" action="{{ url_for('add_prerequisites') }}">
+            <h4>Add a new prerequisite to a unit:</h4>
+            <h5>Note: Given unit must be in the list of UOSs<h5>
+            <input type="text" name="uos" placeholder="UOS code" required>
+            <input type="text" name="prereq" placeholder="Prerequisite UOS code" required>
+            <input class="pure-button pure-button-primary" type="submit">
+        </form>
+    </div>
+</div>
+</body>
+</html>

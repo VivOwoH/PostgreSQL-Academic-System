@@ -139,7 +139,7 @@ def list_prerequisites():
     if (prerequisites is None):
         # Set it to an empty list and show error message
         prerequisites = []
-        flash('There are no prerequisites')
+        flash('Error, there are no prerequisites')
     page['title'] = 'Prerequisites'
     return render_template('prerequisites/prerequisites.html', page=page, 
                         session=session, prerequisites=prerequisites)
@@ -152,16 +152,18 @@ def search_prerequisites():
     if(request.method == 'POST'):
         # Get use input uoscode value
         prerequisites = database.search_prerequisites(request.form['uoscode'])
-        print(request.form['uoscode'])
 
         # If our database connection gave back code -1
         if(prerequisites == -1):
             flash("We cannot find this unit. Check the list below for available unit.")
             return redirect(url_for('list_units'))
 
-        else: # include none situation because a unit can have no prerequisites
+        else:
             if (prerequisites is None):
                 # Set it to an empty list and show error message
+                prerequisites = []
+                flash('Error, there are no prerequisites')
+            elif (prerequisites == ()): # no prerequisites
                 prerequisites = []
                 flash('There are no prerequisites for the given unit')
             page['title'] = 'Search prerequisites'
@@ -171,3 +173,37 @@ def search_prerequisites():
         page['title'] = 'Search prerequisites'
         return render_template('prerequisites/searchPrerequisites.html', page=page, 
                                     session=session, prerequisites=prerequisites)
+
+# Report the number of prerequisite for each UOS
+@app.route('/report-prerequisites')
+def report_prerequisites():
+    # Go into the database file and get the list_prerequisites() function
+    prerequisites = database.report_prerequisites()
+
+    if (prerequisites is None):
+        # Set it to an empty list and show error message
+        prerequisites = []
+        flash('There are no UOS entries')
+    page['title'] = 'Report prerequisites'
+    return render_template('prerequisites/reportPrerequisites.html', page=page, 
+                        session=session, prerequisites=prerequisites)
+
+# Add a new pair of prerequisites
+@app.route('/add-prerequisites', methods=['POST', 'GET'])
+def add_prerequisites():
+    prerequisites = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        entry = database.add_prerequisites(request.form['uos'], request.form['prereq'])
+
+        if (entry is None):
+            flash('Prerequisite not added')
+            return redirect(url_for('add_prerequisites'))
+        flash('A new prerequisite {} is added for {}'.format(entry[0][1], entry[0][0]))
+        return redirect(url_for('list_prerequisites'))
+    
+    else:
+        page['title'] = 'Add prerequisites'
+        return render_template('prerequisites/addPrerequisites.html', page=page, 
+                                    session=session)
