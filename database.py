@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
 
@@ -45,7 +46,6 @@ def database_connect():
 
     # Return the connection to use
     return connection
-
 
 ################################################################################
 # Login Function
@@ -338,6 +338,57 @@ def add_prerequisites(uos, prereq):
     conn.close()                    # Close the connection to the db
     return val
 
+################################################################################
+# Classrooms
+################################################################################
+
+# helper functions to execute queries and mutations
+
+DefaultResolver = lambda c: list(c.fetchall())
+
+def connect() -> pg8000.Connection:
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return pg8000.connect(
+        database=config['DATABASE']['user'],
+        user=config['DATABASE']['user'],
+        password=config['DATABASE']['password'],
+        host=config['DATABASE']['host']
+    )
+
+def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
+    # attempt to connect and then attempt to execute the provided query
+    connection = connect()
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    results = resolver(cursor)
+
+    # close the connection to the database before returning the results
+    cursor.close()
+    connection.close()
+    return results
+
+def classroom_registry():
+    return execute_query("SELECT classroomid, seats, type FROM unidb.classroom")
+
+def classroom_summary():
+    return execute_query("SELECT type, COUNT(*) FROM unidb.classroom GROUP BY type")
+
+def search_classroom(seats: int):
+    return execute_query(f"SELECT classroomid, seats, type FROM unidb.classroom WHERE seats > {seats}")
+
+def add_classroom(classroom_id: str, seats: int, classroom_type: str) -> bool:
+    connection = connect()
+    cursor = connection.cursor()
+    success = True
+    try: 
+        cursor.execute(f"INSERT INTO unidb.classroom VALUES ('{classroom_id}', {seats}, '{classroom_type}')")
+        connection.commit()
+    except Exception: success = False
+
+    connection.close()
+    cursor.close()
+    return success
 
 #####################################################
 #  Python code if you run it on it's own as 2tier
