@@ -1,0 +1,33 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Search Classrooms</h1>
+
+        <form action="{{ url_for('search_classrooms', seats=seats) }}">
+            <label for="seats">Classrooms with more than </label>
+            &nbsp;<input type="text" seats="seats" name="seats" size="4"> seats<br>
+            <button type="submit">Submit</button>
+        </form><br>
+
+        <table class="pure-table">
+            <thead>
+                <tr>
+                    <th>Classroom ID</th>
+                    <th>Seats</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for classroom in classrooms %}
+                <tr>
+                    <td> {{classroom[0]}} </td>
+                    <td> {{classroom[1]}} </td>
+                    <td> {{classroom[2]}} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

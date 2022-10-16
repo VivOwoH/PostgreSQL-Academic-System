@@ -1,0 +1,25 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Classrooms</h1>
+        <table class="pure-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Number of classrooms</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for classroom in classrooms %}
+                <tr>
+                    <td> {{classroom[0]}} </td>
+                    <td> {{classroom[1]}} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
+
