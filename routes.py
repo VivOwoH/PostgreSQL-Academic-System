@@ -269,5 +269,80 @@ def search_lectures():
     return render_template('/lectures/search-lectures.html', page=page, session=session, lectures=lectures)
 
 ################################################################################
+# Classrooms
+################################################################################
+
+# list all of the classrooms stored in the database
+@app.route('/classroom/registry')
+def classroom_registry():
+    # attempt to retrieve the classroom registry from the database
+    classrooms = []
+    try:
+        classrooms = database.classroom_registry()
+    except Exception as e: flash('Error accessing the classroom registry')
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Registry'
+    return render_template('/classrooms/classroom-registry.html', page=page, session=session, classrooms=classrooms)
+
+# display the number of classrooms by type
+@app.route('/classroom/summary')
+def classroom_summary():
+    # attempt to retrieve the classroom summary from the database
+    classrooms = []
+    try:
+        classrooms = database.classroom_summary()
+    except Exception as e: flash('Error accessing the classroom summary')
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Summary'
+    return render_template('/classrooms/classroom-summary.html', page=page, session=session, classrooms=classrooms)
+
+# add a new classroom to the database
+@app.route('/classroom/add')
+def add_classroom():
+    # attempt to retrieve the classroom summary from the database
+    classrooms = []
+    try:
+        classrooms = database.classroom_registry()
+    except Exception as e: flash('Error retrieving classroom registry')
+
+    # attempt to create the classroom if one is specified
+    try: 
+        classroom_id = request.args.get('id')
+        seats = request.args.get('seats')
+        classroom_type = request.args.get('type')
+        if classroom_id != None and seats and seats.isdigit() and classroom_type != None:
+            if database.add_classroom(classroom_id, int(seats), classroom_type):
+                flash(f"Successfully created classroom '{classroom_id}'")
+                return redirect("/classroom/registry")
+            else: flash('Error creating classroom')
+    except Exception as e:
+        print(e)
+        flash('Error creating classroom')
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Summary'
+    return render_template('/classrooms/add-classroom.html', page=page, session=session, classrooms=classrooms)
+
+# search the classrooms stored in the database
+@app.route('/classroom/search')
+def search_classrooms():
+    # attempt to retrieve the classroom summary from the database
+    seats = request.args.get('seats')
+    classrooms = []
+    try:
+        if seats == None or not seats.isdigit():
+            if seats != None and not seats.isdigit():
+                flash('Invalid number of seats')
+            classrooms = database.classroom_registry()
+        else: classrooms = database.search_classroom(int(seats))
+    except Exception: flash('Error searching for classrooms')
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Summary'
+    return render_template('/classrooms/search-classrooms.html', page=page, session=session, classrooms=classrooms)
+
+################################################################################
 # 
 ################################################################################

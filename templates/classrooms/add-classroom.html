@@ -1,0 +1,26 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Add New classroom</h1>
+        <br>
+        <table>
+            <tbody>
+                <form action="{{ url_for('add_classroom', id=id, seats=seats, type=type) }}">
+                    <label for="id">Classroom ID</label>
+                    &nbsp;<input type="text" id="id" name="id"><br><br>
+
+                    <label for="seats">Seats</label>
+                    &nbsp;<input type="text" id="seats" name="seats"><br><br>
+
+                    <label for="type">Type</label>
+                    &nbsp;<input type="text" id="type" name="type"><br><br>
+
+                    <button type="submit">Submit</button>
+                </form>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
+

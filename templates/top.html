@@ -19,19 +19,39 @@
                 
                 <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                   <a href="{{ url_for('list_lectures') }}" class="pure-menu-link">Lectures</a>
-                    <ul class="pure-menu-children"> 
-                      <li class="pure-menu-item">
-                        <a href="{{ url_for('search_lectures') }}" class="pure-menu-link">Search</a>
-                      </li>
-                      <li class="pure-menu-item">
-                        <a href="{{ url_for('count_lectures') }}" class="pure-menu-link">Count</a>
-                      </li>
-                      <li class="pure-menu-item">
-                        <a href="{{ url_for('add_lectures') }}" class="pure-menu-link">Add</a>
-                      </li>
-                    </ul>  
-                  </li>
-                  <li class="pure-menu-item"><a href="{{ url_for('logout')}}" class="pure-menu-link">Logout</a></li>
+                  <ul class="pure-menu-children"> 
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('search_lectures') }}" class="pure-menu-link">Search</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('count_lectures') }}" class="pure-menu-link">Count</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('add_lectures') }}" class="pure-menu-link">Add</a>
+                    </li>
+                  </ul>  
+                </li>
+
+                <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                  <a href="{{ url_for('classroom_registry') }}" class="pure-menu-link">Classrooms</a>
+                  <ul class="pure-menu-children"> 
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('classroom_registry') }}" class="pure-menu-link">Registry</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('classroom_summary') }}" class="pure-menu-link">Summary</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('add_classroom') }}" class="pure-menu-link">Add</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('search_classrooms') }}" class="pure-menu-link">Search</a>
+                    </li>
+                  </ul>  
+                </li>
+
+
+                <li class="pure-menu-item"><a href="{{ url_for('logout')}}" class="pure-menu-link">Logout</a></li>
             </ul>
             {% endif %}
             <div id="top-unikey">{{ page.unikey }}</div>
