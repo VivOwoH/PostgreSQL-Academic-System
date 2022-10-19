@@ -174,6 +174,59 @@ def query_result(sql):
     conn.close()                    # Close the connection to the db
     return val
 
+# Extension: prohibitions table -> list prohibition + check uos eligibility
+def list_prohibitions():
+    list_sql = """SELECT DISTINCT a.uoscode, a.uosname, a.prohibuoscode, b.prohibuosname, a.enforcedsince
+                        FROM (SELECT uoscode, uosname, prohibuoscode, enforcedsince
+                                FROM UniDB.Prohibitions NATURAL JOIN UniDB.UnitOfStudy) a
+                        Join
+                            (SELECT prohibuoscode, uosname as prohibuosname, enforcedsince
+                                FROM UniDB.Prohibitions JOIN UniDB.UnitOfStudy A ON (prohibuoscode=A.uoscode)) b 
+	                    ON a.prohibuoscode = b.prohibuoscode AND a.enforcedsince=b.enforcedsince
+						ORDER BY a.uoscode, a.prohibuoscode"""
+    return query_result(list_sql)
+
+def check_uos_eligibility(uoscode, sid):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT prohibuoscode
+                    FROM UniDB.Prohibitions
+                    WHERE %s = uoscode
+                    AND prohibuoscode IN (SELECT uosCode
+                                FROM UniDB.transcript
+                                WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
+        val = cur.fetchall()
+        if len(val) > 0:
+            return False # have finished a unit that is in prohib list
+
+        cur.execute("""SELECT prerequoscode
+                    FROM UniDB.Requires
+                    WHERE %s = uoscode
+                    AND prerequoscode NOT IN (SELECT uosCode
+                                FROM UniDB.transcript
+                                WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
+        val = cur.fetchall()
+        if len(val) > 0:
+            return False # have not finished all prerequisites
+
+        return True # pass both prohib and prereq check, can choose this unit
+
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+    
+
 #   1. UoSCodes	and	names of the two units,	and enforce date
 def list_prerequisites():
     list_sql = """SELECT DISTINCT a.uoscode, a.uosname, a.prerequoscode, b.prerequosname, a.enforcedsince

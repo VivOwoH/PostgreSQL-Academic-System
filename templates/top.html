@@ -28,6 +28,18 @@
                     <li class="pure-menu-item">
                       <a href="{{ url_for('add_prerequisites') }}" class="pure-menu-link">Add</a>
                     </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('check_uos_eligibility') }}" class="pure-menu-link">UOS Eligibility</a>
+                    </li>
+                  </ul>  
+                </li>
+
+                <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                  <a href="{{ url_for('list_prohibitions') }}" class="pure-menu-link">Prohibitions</a>
+                  <ul class="pure-menu-children"> 
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('check_uos_eligibility') }}" class="pure-menu-link">UOS Eligibility</a>
+                    </li>
                   </ul>  
                 </li>
                 
