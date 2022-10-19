@@ -28,7 +28,7 @@ def database_connect():
             password='password_from_config',
             user='y19i2120_unikey')
         '''
-        connection = pg8000.connect(database=config['DATABASE']['user'],
+        connection = pg8000.connect(database='y22s2i2120_apok9341',
                                     user=config['DATABASE']['user'],
                                     password=config['DATABASE']['password'],
                                     host=config['DATABASE']['host'])
@@ -311,6 +311,19 @@ def lectures(func, **kwargs):
                             ORDER BY classtime""")
             val = cur.fetchall()
 
+        if func == "classid_fkey":
+            cur.execute("""SELECT classroomid 
+                            FROM unidb.lecture
+                            GROUP BY classroomid
+                            ORDER BY classroomid""")
+            val = cur.fetchall()
+        
+        if func == "uoscode_fkey":
+            cur.execute("""SELECT uoscode, semester, year
+                            FROM unidb.lecture
+                            ORDER BY uoscode""")
+            val = cur.fetchall()
+
         if func == "add":
             flag = True
             for k, v in kwargs.items():
@@ -322,20 +335,16 @@ def lectures(func, **kwargs):
                 year = kwargs['year']
                 time = kwargs['time']
                 id = kwargs['id']
-                cur.execute("""INSERT INTO lecture 
-                                VALUES (
-                                    %s
-                                    %s
-                                    %s
-                                    %s
-                                    %s
-                                )""", 
+                print(code, sem, year, time, id)
+                cur.execute("""INSERT INTO unidb.lecture 
+                                VALUES (%s, %s, %s, %s, %s)""", 
                             (code, sem, year, time, id))
             else:
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy 
-                            USING (uoscode)""")
+                            USING (uoscode)
+                            ORDER BY uoscode""")
             val = cur.fetchall()
 
     except Exception as e:
