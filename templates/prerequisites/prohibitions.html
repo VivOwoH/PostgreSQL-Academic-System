@@ -1,0 +1,24 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Prohibitions</h1>
+        <table class="pure-table">
+            <thead>
+                <tr><th>UOS Code</th><th>UOS Name</th><th>Prohibition Code</th><th>Prohibition Name</th><th>Enforced Since</th></tr>
+            </thead>
+            <tbody>
+                {% for prohibition in prohibitions %}
+                    <tr>
+						<td> {{prohibition[0]}}</td>
+                        <td> {{prohibition[1]}} </td>
+                        <td> {{prohibition[2]}} </td>
+                        <td> {{prohibition[3]}} </td>
+                        <td> {{prohibition[4]}} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

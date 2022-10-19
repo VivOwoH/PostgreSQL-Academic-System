@@ -1,0 +1,15 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Check UOS Eligibility</h1>
+
+        <form class="pure-form pure-form-stacked login" method="POST" action="{{ url_for('check_uos_eligibility') }}">
+            <h5>To be eligible to take a unit, you must complete all prerequisites and have not taken any prohibited unit.<h5>
+            <input type="text" name="uoscode" placeholder="UOS code" required>
+            <input class="pure-button pure-button-primary" type="submit">
+        </form>
+        <br></br>
+    </div>
+</div>
+</body>
+</html>

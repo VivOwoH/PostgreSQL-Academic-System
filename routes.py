@@ -208,6 +208,44 @@ def add_prerequisites():
         return render_template('/prerequisites/addPrerequisites.html', page=page, 
                                     session=session)
 
+# List all prohibitions
+@app.route('/prerequisites/list-prohibitions')
+def list_prohibitions():
+    # Go into the database file and get the list_prerequisites() function
+    prohibitions = database.list_prohibitions()
+
+    if (prohibitions is None):
+        # Set it to an empty list and show error message
+        prohibitions = []
+        flash('Error, there are no prohibitions')
+    page['title'] = 'Prohibitions'
+    return render_template('/prerequisites/prohibitions.html', page=page, 
+                        session=session, prohibitions=prohibitions)
+
+# Check unit eligibility
+@app.route('/prerequisites/check_uos_eligibility', methods=['POST', 'GET'])
+def check_uos_eligibility():
+    prerequisites = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        check_result = database.check_uos_eligibility(request.form['uoscode'], session['sid'])
+
+        if (check_result == -1):
+            flash("We cannot find this unit. Check the list below for available unit.")
+            return redirect(url_for('list_units'))
+            
+        elif(check_result == 0):
+            flash("You are not eligible to choose this unit. Check Prerequisites and Prohibitions requirement.")
+            return redirect(url_for('check_uos_eligibility'))
+
+        elif (check_result == 1):
+            flash('You can choose this UOS.')
+            return redirect(url_for('check_uos_eligibility'))
+    else:
+        page['title'] = 'Search prerequisites'
+        return render_template('/prerequisites/checkUOSEligibility.html', page=page, session=session)
+
                                     
 ################################################################################
 # Lectures
