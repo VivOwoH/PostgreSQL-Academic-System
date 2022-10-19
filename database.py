@@ -196,6 +196,13 @@ def check_uos_eligibility(uoscode, sid):
     cur = conn.cursor()
     val = None
     try:
+        cur.execute("""SELECT uoscode 
+                        FROM UniDB.UnitOfStudy
+                        WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
+        val = cur.fetchall()
+        if val is None or len(val) < 1:
+            return -1 # invalid input: we cannot find this given unit
+
         cur.execute("""SELECT prohibuoscode
                     FROM UniDB.Prohibitions
                     WHERE %s = uoscode
@@ -204,7 +211,7 @@ def check_uos_eligibility(uoscode, sid):
                                 WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
         val = cur.fetchall()
         if len(val) > 0:
-            return False # have finished a unit that is in prohib list
+            return 0 # have finished a unit that is in prohib list
 
         cur.execute("""SELECT prerequoscode
                     FROM UniDB.Requires
@@ -214,9 +221,9 @@ def check_uos_eligibility(uoscode, sid):
                                 WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
         val = cur.fetchall()
         if len(val) > 0:
-            return False # have not finished all prerequisites
+            return 0 # have not finished all prerequisites
 
-        return True # pass both prohib and prereq check, can choose this unit
+        return 1 # pass both prohib and prereq check, can choose this unit
 
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value

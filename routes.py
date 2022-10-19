@@ -231,12 +231,15 @@ def check_uos_eligibility():
         # Get use input uoscode value
         check_result = database.check_uos_eligibility(request.form['uoscode'], session['sid'])
 
-        # If our database connection gave back code -1
-        if(check_result == False):
+        if (check_result == -1):
+            flash("We cannot find this unit. Check the list below for available unit.")
+            return redirect(url_for('list_units'))
+            
+        elif(check_result == 0):
             flash("You are not eligible to choose this unit. Check Prerequisites and Prohibitions requirement.")
             return redirect(url_for('check_uos_eligibility'))
 
-        else:
+        elif (check_result == 1):
             flash('You can choose this UOS.')
             return redirect(url_for('check_uos_eligibility'))
     else:
