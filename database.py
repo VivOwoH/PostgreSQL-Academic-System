@@ -303,6 +303,13 @@ def lectures(func, **kwargs):
                             JOIN unidb.unitofstudy 
                             USING (uoscode)""")
             val = cur.fetchall()
+        
+        if func == "timing":
+            cur.execute("""SELECT classtime 
+                            FROM unidb.lecture
+                            GROUP BY classtime
+                            ORDER BY classtime""")
+            val = cur.fetchall()
 
         if func == "add":
             flag = True

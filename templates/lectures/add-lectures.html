@@ -22,6 +22,21 @@
         <h1 class="page-title">Add New Lecture</h1>
         <table>
             <tbody>
+
+                <!-- <form action="{{ url_for('search_lectures', time=time) }}">
+                    <label for="time">Search Class Time:</label>
+                    <select value="time" id="time" name="time">
+                        {% for time in timing %}
+                            <option>{{time[0]}}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit">
+                </form> -->
+
+                <!-- requirements -  -->
+
+
+
                 <form action="{{ url_for('add_lectures', code=code, sem=sem, year=year, time=time, id=id) }}">
                     <label for="code">UOS Code:</label>
                     <input type="text" id="code" name="code">

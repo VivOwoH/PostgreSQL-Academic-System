@@ -14,9 +14,7 @@ Report link:https://unisydneyedu-my.sharepoint.com/personal/weha7612_uni_sydney_
 
 # Aryan's Notes
 - Create a selection menu rather than enabling input text - this is more secure and ensures data conforms to requirements
-- Nav bar children css (currently invisible until hover)
 - Search page should be drop-down menu
 - Css for adding new lecture (have the two tables side by side + drop down menus should be stacked vertically)
 - Report
-- Upload individual progress (SQL queries)
 - Traverse admin sql access

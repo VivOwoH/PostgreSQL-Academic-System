@@ -240,6 +240,12 @@ def count_lectures():
 # Add lectures
 @app.route('/lectures/add-lectures')
 def add_lectures():
+    # Retrieve existing lectures
+    lectures = []
+    try:
+        lectures = database.lectures("list")
+    except Exception as e: flash('Error retrieving existing lectures')
+    # print(lectures)
     dict = {
         'code':request.args.get('code'),
         'sem':request.args.get('sem'),
@@ -258,15 +264,18 @@ def add_lectures():
 
 # Search lectures
 @app.route('/lectures/search-lectures')
-def search_lectures():    
+def search_lectures():
+    timing = database.lectures('timing')
+    # print(timing)
     time = {'time':request.args.get('time')}
+    print(time)
     lectures = database.lectures('search', **time)
     if (lectures is None):
         # Set it to an empty list and show error message
         lectures = []
         flash('Error, there are no lectures')
     page['title'] = 'Lectures'
-    return render_template('/lectures/search-lectures.html', page=page, session=session, lectures=lectures)
+    return render_template('/lectures/search-lectures.html', page=page, session=session, lectures=lectures, timing=timing)
 
 ################################################################################
 # Classrooms
