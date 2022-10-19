@@ -131,7 +131,7 @@ def list_units():
 ################################################################################
 
 # List the prerequisite units
-@app.route('/list-prerequisites')
+@app.route('/prerequisites/list-prerequisites')
 def list_prerequisites():
     # Go into the database file and get the list_prerequisites() function
     prerequisites = database.list_prerequisites()
@@ -141,11 +141,11 @@ def list_prerequisites():
         prerequisites = []
         flash('Error, there are no prerequisites')
     page['title'] = 'Prerequisites'
-    return render_template('prerequisites/prerequisites.html', page=page, 
+    return render_template('/prerequisites/prerequisites.html', page=page, 
                         session=session, prerequisites=prerequisites)
 
 # Seach for all prerequisites of a unit
-@app.route('/search-prerequisites', methods=['POST', 'GET'])
+@app.route('/prerequisites/search-prerequisites', methods=['POST', 'GET'])
 def search_prerequisites():
     prerequisites = []
     # If it's a post method handle it nicely
@@ -167,15 +167,15 @@ def search_prerequisites():
                 prerequisites = []
                 flash('There are no prerequisites for the given unit')
             page['title'] = 'Search prerequisites'
-            return render_template('prerequisites/searchPrerequisites.html', page=page, 
+            return render_template('/prerequisites/searchPrerequisites.html', page=page, 
                                     session=session, prerequisites=prerequisites)
     else:
         page['title'] = 'Search prerequisites'
-        return render_template('prerequisites/searchPrerequisites.html', page=page, 
+        return render_template('/prerequisites/searchPrerequisites.html', page=page, 
                                     session=session, prerequisites=prerequisites)
 
 # Report the number of prerequisite for each UOS
-@app.route('/report-prerequisites')
+@app.route('/prerequisites/report-prerequisites')
 def report_prerequisites():
     # Go into the database file and get the list_prerequisites() function
     prerequisites = database.report_prerequisites()
@@ -185,11 +185,11 @@ def report_prerequisites():
         prerequisites = []
         flash('There are no UOS entries')
     page['title'] = 'Report prerequisites'
-    return render_template('prerequisites/reportPrerequisites.html', page=page, 
+    return render_template('/prerequisites/reportPrerequisites.html', page=page, 
                         session=session, prerequisites=prerequisites)
 
 # Add a new pair of prerequisites
-@app.route('/add-prerequisites', methods=['POST', 'GET'])
+@app.route('/prerequisites/add-prerequisites', methods=['POST', 'GET'])
 def add_prerequisites():
     prerequisites = []
     # If it's a post method handle it nicely
@@ -205,7 +205,7 @@ def add_prerequisites():
     
     else:
         page['title'] = 'Add prerequisites'
-        return render_template('prerequisites/addPrerequisites.html', page=page, 
+        return render_template('/prerequisites/addPrerequisites.html', page=page, 
                                     session=session)
 
                                     
