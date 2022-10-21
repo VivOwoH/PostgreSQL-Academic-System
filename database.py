@@ -28,7 +28,7 @@ def database_connect():
             password='password_from_config',
             user='y19i2120_unikey')
         '''
-        connection = pg8000.connect(database=config['DATABASE']['user'],
+        connection = pg8000.connect(database=config['DATABASE']['database'],
                                     user=config['DATABASE']['user'],
                                     password=config['DATABASE']['password'],
                                     host=config['DATABASE']['host'])
@@ -409,7 +409,7 @@ def connect() -> pg8000.Connection:
     config = configparser.ConfigParser()
     config.read('config.ini')
     return pg8000.connect(
-        database=config['DATABASE']['user'],
+        database=config['DATABASE']['database'],
         user=config['DATABASE']['user'],
         password=config['DATABASE']['password'],
         host=config['DATABASE']['host']
