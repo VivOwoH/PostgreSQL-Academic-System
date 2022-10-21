@@ -289,10 +289,26 @@ def report_prerequisites():
 #   4. Allow user to add a new (prerequities, unit) pair to the dataset
 # (uoscode, prereqcode) -> must be in unitOfStudy table already
 def add_prerequisites(uos, prereq):
-    add_sql = """INSERT INTO UniDB.Requires
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""INSERT INTO UniDB.Requires
                         VALUES (%s, %s, CURRENT_DATE) 
-                        RETURNING uoscode, prerequoscode""", (uos, prereq)
-    return query_result(add_sql)
+                        RETURNING uoscode, prerequoscode""", (uos, prereq))
+        val = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
     
 
 ################################################################################
