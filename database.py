@@ -4,6 +4,7 @@ from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
 import datetime
+import re
 
 ################################################################################
 # Connect to the database
@@ -407,10 +408,6 @@ def lectures(func, **kwargs):
 # Classrooms
 ################################################################################
 
-# helper functions to execute queries and mutations
-
-DefaultResolver = lambda c: list(c.fetchall())
-
 def connect() -> pg8000.Connection:
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -421,8 +418,11 @@ def connect() -> pg8000.Connection:
         host=config['DATABASE']['host']
     )
 
+DefaultResolver = lambda c: list(c.fetchall())
+NaturalNumber = re.compile('^[1-9]+[0-9]*$')
+ValidString = re.compile('^[A-z0-9_-]+$')
+
 def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
-    # attempt to connect and then attempt to execute the provided query
     connection = connect()
     results = None
     try:
@@ -439,21 +439,28 @@ def classroom_registry():
 def classroom_summary():
     return execute_query("SELECT type, COUNT(*) FROM unidb.classroom GROUP BY type")
 
-def search_classroom(seats: int):
+def search_classroom(seats: str):
+    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
     return execute_query(f"SELECT classroomid, seats, type FROM unidb.classroom WHERE seats > {seats}")
 
-def add_classroom(classroom_id: str, seats: int, classroom_type: str) -> bool:
+def add_classroom(classroom_id: str, seats: str, classroom_type: str):
+    if not ValidString.match(classroom_id): raise ValueError(f"Invalid classroom identifier '{classroom_id}'")
+    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
+    if classroom_type != '' and not ValidString.match(classroom_type):
+        raise ValueError(f"Invalid type of classroom '{classroom_type}'")
+
     connection = connect()
     cursor = connection.cursor()
-    success = True
     try: 
         cursor.execute(f"INSERT INTO unidb.classroom VALUES ('{classroom_id}', {seats}, '{classroom_type}')")
         connection.commit()
-    except Exception: success = False
-
-    connection.close()
-    cursor.close()
-    return success
+    except pg8000.ProgrammingError as error:
+        if error.args[2] == '22001': raise ValueError('Classroom type exceeds 7 letter limit')
+        if error.args[2] == '23505': raise ValueError('Classroom with id already exists')
+        raise error
+    finally:
+        connection.close()
+        cursor.close()
 
 ################################################################################
 # Announcements
@@ -469,20 +476,21 @@ class Announcement:
         self.unitName = row[4]
         self.details = row[5].replace('\\n', '\n')
 
-def list_announcements(semester: int, year: int) -> List[Announcement]:
+def list_announcements(semester: str, year: str) -> List[Announcement]:
+    if not NaturalNumber.match(semester): raise ValueError(f"Invalid semester '{semester}'")
+    if not NaturalNumber.match(year): raise ValueError(f"Invalid year '{year}'")
     sql_query = f"""
     SELECT title, date, name as author, uoSCode as code, uosname as unit, details
       FROM unidb.Announcement as A                                               
         INNER JOIN unidb.UnitOfStudy as U USING (uoScode)                        
         INNER JOIN unidb.AcademicStaff ON (author = id)                          
     WHERE CASE                              
-      WHEN 'S{semester}' = 'S1' THEN EXTRACT(month FROM date) <= 7                
-      WHEN 'S{semester}' = 'S2' THEN EXTRACT(month FROM Date) >= 7                
+      WHEN {semester} = 1 THEN EXTRACT(month FROM date) <= 7                
+      WHEN {semester} = 2 THEN EXTRACT(month FROM Date) >= 7                
       ELSE TRUE                                                                  
     END AND EXTRACT(year FROM date) = {year}
     ORDER BY date DESC, title ASC, code ASC
     """
-    print([ Announcement(row) for row in execute_query(sql_query) ])
     return [ Announcement(row) for row in execute_query(sql_query) ]
 
 #####################################################
