@@ -278,7 +278,8 @@ def lectures(func, **kwargs):
             cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy 
-                            USING (uoscode)""")
+                            USING (uoscode)
+                            ORDER BY uoscode""")
             val = cur.fetchall()
 
         if func == "count":
@@ -291,7 +292,7 @@ def lectures(func, **kwargs):
 
         if func == "search":
             time = kwargs['time']
-            if time != "" and time is not None:
+            if time is not None:
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy USING (uoscode)
@@ -321,32 +322,26 @@ def lectures(func, **kwargs):
         if func == "uoscode_fkey":
             cur.execute("""SELECT uoscode, semester, year
                             FROM unidb.lecture
+                            GROUP BY uoscode, semester, year
                             ORDER BY uoscode""")
             val = cur.fetchall()
 
         if func == "add":
-            flag = True
-            for k, v in kwargs.items():
-                if kwargs[k] is None or kwargs[k] == "":
-                    flag = False
-            if flag == True:
-                code = kwargs['code']
-                sem = kwargs['sem']
-                year = kwargs['year']
-                time = kwargs['time']
-                id = kwargs['id']
-                print(code, sem, year, time, id)
-                cur.execute("""INSERT INTO unidb.lecture 
-                                VALUES (%s, %s, %s, %s, %s)""", 
-                            (code, sem, year, time, id))
-            else:
-                cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
-                            FROM unidb.lecture
-                            JOIN unidb.unitofstudy 
-                            USING (uoscode)
-                            ORDER BY uoscode""")
-            val = cur.fetchall()
-
+            code = kwargs['code']
+            sem = kwargs['sem']
+            year = kwargs['year']
+            time = kwargs['time']
+            id = kwargs['id']
+            success = True
+            print(code, sem, year, time, id)
+            try:
+                cur.execute(f"INSERT INTO unidb.lecture VALUES ('{code}', '{sem}', '{year}', '{time}', '{id}')")
+                conn.commit()
+            except Exception: 
+                success = False
+                cur.close()
+                conn.close()
+            return success
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
         print("Error fetching from database {}".format(e))

@@ -242,10 +242,6 @@ def count_lectures():
 def add_lectures():
     # Retrieve existing lectures
     lectures = []
-    try:
-        lectures = database.lectures("list")
-    except Exception as e: flash('Error retrieving existing lectures')
-    # print(lectures)
     classid_fkey = database.lectures('classid_fkey')
     uoscode_fkey = database.lectures('uoscode_fkey')
     timing = database.lectures('timing')
@@ -258,8 +254,13 @@ def add_lectures():
             'time':request.args.get('time'),
             'id':request.args.get('id')
             }
-        lectures = database.lectures("add", **dict)
-    except Exception as e: flash('Error retrieving existing lectures')
+        if database.lectures("add", **dict):
+            flash(f"Successfully Added New Lecture '{dict['code']}' '{dict['sem']}' '{dict['year']}' '{dict['time']}' '{dict['id']}'")
+        else:
+            flash(f"Could Not Add New Lecture '{dict['code']}' '{dict['sem']}' '{dict['year']}' '{dict['time']}' '{dict['id']} - You Cannot Have The Same Lecture In The Same Classroom Location (Albeit Different Times)'")
+    except Exception as e:
+        # This occurs on page refresh
+        pass
     if (lectures is None):
         # Set it to an empty list and show error message
         lectures = []

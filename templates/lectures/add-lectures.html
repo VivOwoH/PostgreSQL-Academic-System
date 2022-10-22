@@ -2,49 +2,32 @@
 <div id="content">
     <div id="container">
         <h1 class="page-title">Add New Lecture</h1>
-        <table>
-            <tbody>
-                <form action="{{ url_for('add_lectures', code=code, id=id, time=time) }}">
-                    <label for="code">Select UOS Code:</label>
-                    <select value="code" id="code" name="code">
-                        {% for uoscode in uoscode_fkey %}
-                            <option>{{uoscode[0]}}-{{uoscode[1]}}-{{uoscode[2]}}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="time">Select Class Time:</label>
-                    <select value="time" id="time" name="time">
-                        {% for time in timing %}
-                            <option>{{time[0]}}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="id">Select Classroom Location:</label>
-                    <select value="id" id="id" name="id">
-                        {% for classid in classid_fkey %}
-                            <option>{{classid[0]}}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="submit">
-                </form>
-            </tbody>
-        </table>
-        <h1 class="page-title">Add Lectures</h1>
-        <table class="pure-table">
-            <thead>
-                <tr><th>UOS Code</th><th>UOS Name</th><th>Semester</th><th>Year</th><th>Classtime</th><th>Classroom ID</th></tr>
-            </thead>
-            <tbody>
-                {% for lecture in lectures %}
-                    <tr>
-						<td> {{lecture[0]}} </td>
-                        <td> {{lecture[1]}} </td>
-                        <td> {{lecture[2]}} </td>
-                        <td> {{lecture[3]}} </td>
-                        <td> {{lecture[4]}} </td>
-                        <td> {{lecture[5]}} </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <tbody>
+            <form action="{{ url_for('add_lectures', code=code, id=id, time=time) }}">
+                <label for="code">Select UOS Code: </label>
+                <select value="code" id="code" name="code">
+                    {% for uoscode in uoscode_fkey %}
+                        <option>{{uoscode[0]}}-{{uoscode[1]}}-{{uoscode[2]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="time">Select Class Time: </label>
+                <select value="time" id="time" name="time">
+                    {% for time in timing %}
+                        <option>{{time[0]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="id">Select Classroom Location: </label>
+                <select value="id" id="id" name="id">
+                    {% for classid in classid_fkey %}
+                        <option>{{classid[0]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <input type="submit">
+            </form>
+        </tbody>
     </div>
 </div>
 </body>
