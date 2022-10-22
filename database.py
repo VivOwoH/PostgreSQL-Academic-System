@@ -313,6 +313,10 @@ def add_prerequisites(uos, prereq):
 
 ################################################################################
 # Lectures
+#   1. Display all lecture locations.
+#   2. Enable the user to search for lectures at a specific time.
+#   3. Produce a report illustrating how many classes take place in each room.
+#   4. Provide functionality to add a new lecture to the dataset.
 ################################################################################
 
 def lectures(func, **kwargs):
@@ -320,11 +324,10 @@ def lectures(func, **kwargs):
     conn = database_connect()
     if(conn is None):
         return None
-    # Sets up the rows as a dictionary
     cur = conn.cursor()
     val = None
     try:
-
+        # Query => Listing all lectures
         if func == "list":
             cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
@@ -333,6 +336,7 @@ def lectures(func, **kwargs):
                             ORDER BY uoscode""")
             val = cur.fetchall()
 
+        # Query => Counting number of lectures in each classroom
         if func == "count":
             cur.execute("""SELECT classroomid, COUNT(*) 
                             FROM unidb.lecture
@@ -341,21 +345,23 @@ def lectures(func, **kwargs):
                             DESC""")
             val = cur.fetchall()
 
+        # Query => Enable the user to search classtimes
         if func == "search":
-            time = kwargs['time']
-            if time is not None:
+            time = kwargs['time'] # Access the optional dictionary
+            if time is not None: # If a time has been selected, return lectures that run at that classtime
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy USING (uoscode)
                             WHERE classtime LIKE %s""", 
                             (time, ))
-            else:
+            else: # If time has not been selected, return all
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
                             JOIN unidb.unitofstudy 
                             USING (uoscode)""")
             val = cur.fetchall()
         
+        # Query => Return all unique classtimes
         if func == "timing":
             cur.execute("""SELECT classtime 
                             FROM unidb.lecture
@@ -363,6 +369,7 @@ def lectures(func, **kwargs):
                             ORDER BY classtime""")
             val = cur.fetchall()
 
+        # Query => Return all unique classrooms
         if func == "classid_fkey":
             cur.execute("""SELECT classroomid 
                             FROM unidb.lecture
@@ -370,6 +377,7 @@ def lectures(func, **kwargs):
                             ORDER BY classroomid""")
             val = cur.fetchall()
         
+        # Query => Return all unique lectures (uoscode-semester-year)
         if func == "uoscode_fkey":
             cur.execute("""SELECT uoscode, semester, year
                             FROM unidb.lecture
@@ -377,6 +385,7 @@ def lectures(func, **kwargs):
                             ORDER BY uoscode""")
             val = cur.fetchall()
 
+        # Query => Add new classroom for an existing lecture
         if func == "add":
             code = kwargs['code']
             sem = kwargs['sem']
@@ -384,7 +393,6 @@ def lectures(func, **kwargs):
             time = kwargs['time']
             id = kwargs['id']
             success = True
-            print(code, sem, year, time, id)
             try:
                 cur.execute(f"INSERT INTO unidb.lecture VALUES ('{code}', '{sem}', '{year}', '{time}', '{id}')")
                 conn.commit()
@@ -393,6 +401,17 @@ def lectures(func, **kwargs):
                 cur.close()
                 conn.close()
             return success
+
+        # Extension: Query => Display lecture duration
+        if func == "duration":
+            cur.execute("""SELECT uoscode, semester, year, duration
+                            FROM unidb.lecture lecture
+                            JOIN unidb.duration duration
+                            ON duration.uoscode = lecture.uoscode
+                            AND duration.semester = lecture.semester
+                            AND duration.year = lecture.year
+                            """)
+            val = cur.fetchall()
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
         print("Error fetching from database {}".format(e))
