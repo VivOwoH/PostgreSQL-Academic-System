@@ -1,0 +1,46 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Search Staff By Department</h1>
+            <div class="input-group center-block">
+                <div class="form-outline">
+                    <form class="Search" method="POST" action="{{url_for('search_staff_by_department')}}" autocomplete="off">
+                    <input type="text" id="form1" name="searchterm" class="form-control" placeholder="Search"/>
+                </div>
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+        <datalist id="innerSearchTermDataList">
+        </datalist>
+        <p> </p>
+        <table class="table table-bordered">
+            <thead>
+                <tr><th>Staff ID</th><th>Staff Name</th><th>Address</th></tr>
+            </thead>
+            <tbody>
+                {% for st in staff %}
+                    <tr>
+						<td> {{st[0]}}</td>
+                        <td> {{st[1]}} </td>
+                        <td> {{st[2]}} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+<style>
+    .center-block {
+        margin-left: 14.5cm;
+        margin-right: auto;
+    }
+    .form-control {
+        border-radius: 12px 1px 1px 12px;
+        border-color: rgb(68,108,179);
+    }
+
+</style>
+</body>
+</html>

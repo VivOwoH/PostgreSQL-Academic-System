@@ -4,6 +4,7 @@ from modules import *
 from flask import *
 import database
 import configparser
+import datetime
 
 
 page = {}
@@ -32,11 +33,10 @@ portchoice = config['FLASK']['port']
 @app.route('/')
 def index():
     # If the user is not logged in, then make them go to the login page
-    if( 'logged_in' not in session or not session['logged_in']):
+    if 'logged_in' not in session or not session['logged_in']:
         return redirect(url_for('login'))
-    page['unikey'] = unikey
-    page['title'] = 'Welcome'
-    return render_template('welcome.html', session=session, page=page)
+    else:
+        return redirect(url_for('newsfeed'))
 
 ################################################################################
 # Login Page
@@ -131,7 +131,7 @@ def list_units():
 ################################################################################
 
 # List the prerequisite units
-@app.route('/list-prerequisites')
+@app.route('/prerequisites/list-prerequisites')
 def list_prerequisites():
     # Go into the database file and get the list_prerequisites() function
     prerequisites = database.list_prerequisites()
@@ -141,11 +141,11 @@ def list_prerequisites():
         prerequisites = []
         flash('Error, there are no prerequisites')
     page['title'] = 'Prerequisites'
-    return render_template('prerequisites/prerequisites.html', page=page, 
+    return render_template('/prerequisites/prerequisites.html', page=page, 
                         session=session, prerequisites=prerequisites)
 
 # Seach for all prerequisites of a unit
-@app.route('/search-prerequisites', methods=['POST', 'GET'])
+@app.route('/prerequisites/search-prerequisites', methods=['POST', 'GET'])
 def search_prerequisites():
     prerequisites = []
     # If it's a post method handle it nicely
@@ -167,15 +167,15 @@ def search_prerequisites():
                 prerequisites = []
                 flash('There are no prerequisites for the given unit')
             page['title'] = 'Search prerequisites'
-            return render_template('prerequisites/searchPrerequisites.html', page=page, 
+            return render_template('/prerequisites/searchPrerequisites.html', page=page, 
                                     session=session, prerequisites=prerequisites)
     else:
         page['title'] = 'Search prerequisites'
-        return render_template('prerequisites/searchPrerequisites.html', page=page, 
+        return render_template('/prerequisites/searchPrerequisites.html', page=page, 
                                     session=session, prerequisites=prerequisites)
 
 # Report the number of prerequisite for each UOS
-@app.route('/report-prerequisites')
+@app.route('/prerequisites/report-prerequisites')
 def report_prerequisites():
     # Go into the database file and get the list_prerequisites() function
     prerequisites = database.report_prerequisites()
@@ -185,11 +185,11 @@ def report_prerequisites():
         prerequisites = []
         flash('There are no UOS entries')
     page['title'] = 'Report prerequisites'
-    return render_template('prerequisites/reportPrerequisites.html', page=page, 
+    return render_template('/prerequisites/reportPrerequisites.html', page=page, 
                         session=session, prerequisites=prerequisites)
 
 # Add a new pair of prerequisites
-@app.route('/add-prerequisites', methods=['POST', 'GET'])
+@app.route('/prerequisites/add-prerequisites', methods=['POST', 'GET'])
 def add_prerequisites():
     prerequisites = []
     # If it's a post method handle it nicely
@@ -205,8 +205,46 @@ def add_prerequisites():
     
     else:
         page['title'] = 'Add prerequisites'
-        return render_template('prerequisites/addPrerequisites.html', page=page, 
+        return render_template('/prerequisites/addPrerequisites.html', page=page, 
                                     session=session)
+
+# List all prohibitions
+@app.route('/prerequisites/list-prohibitions')
+def list_prohibitions():
+    # Go into the database file and get the list_prerequisites() function
+    prohibitions = database.list_prohibitions()
+
+    if (prohibitions is None):
+        # Set it to an empty list and show error message
+        prohibitions = []
+        flash('Error, there are no prohibitions')
+    page['title'] = 'Prohibitions'
+    return render_template('/prerequisites/prohibitions.html', page=page, 
+                        session=session, prohibitions=prohibitions)
+
+# Check unit eligibility
+@app.route('/prerequisites/check_uos_eligibility', methods=['POST', 'GET'])
+def check_uos_eligibility():
+    prerequisites = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        check_result = database.check_uos_eligibility(request.form['uoscode'], session['sid'])
+
+        if (check_result == -1):
+            flash("We cannot find this unit. Check the list below for available unit.")
+            return redirect(url_for('list_units'))
+            
+        elif(check_result == 0):
+            flash("You are not eligible to choose this unit. Check Prerequisites and Prohibitions requirement.")
+            return redirect(url_for('check_uos_eligibility'))
+
+        elif (check_result == 1):
+            flash('You can choose this UOS.')
+            return redirect(url_for('check_uos_eligibility'))
+    else:
+        page['title'] = 'Search prerequisites'
+        return render_template('/prerequisites/checkUOSEligibility.html', page=page, session=session)
 
                                     
 ################################################################################
@@ -359,5 +397,51 @@ def search_classrooms():
     return render_template('/classrooms/search-classrooms.html', page=page, session=session, classrooms=classrooms)
 
 ################################################################################
-# 
+# Announcements
 ################################################################################
+
+def current_semester() -> str: return ('2' if datetime.date.today().month > 7 else '1')
+def current_year() -> str: return str(datetime.date.today().year)
+
+# search the classrooms stored in the database
+@app.route('/newsfeed')
+def newsfeed():
+    # attempt to retrieve the classroom summary from the database
+    semester = request.args.get('semester') if request.args.get('semester') else current_semester()
+    year = request.args.get('year') if request.args.get('year') else current_year()
+    unit = request.args.get('unit') if request.args.get('unit') != None else ''
+    announcements = []
+    previous_year = None
+    next_year = None
+    try:
+        if not semester or not semester.isdigit():
+            flash(f"Invalid semester provided '{semester}'")
+        elif not year or not year.isdigit():
+            flash(f"Invalid year provided '{year}'")
+        else:
+            previous_year = str(int(year) - 1)
+            next_year = str(int(year) + 1)
+            announcements = database.list_announcements(int(semester), int(year))
+    except Exception as e: flash(str(e))
+
+    # build a dictionary with all the unique units that appear the query
+    units = {}
+    for announcement in announcements:
+        units[announcement.unitCode] = announcement.unitName
+
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Summary'
+    print(semester, year)
+    return render_template(
+        '/newsfeed.html',
+        page=page,
+        session=session,
+        announcements=[ a for a in announcements if not unit or a.unitCode == unit ],
+        units=units,
+        active_unit=unit,
+        semester=semester,
+        year=year,
+        previous_year=previous_year,
+        next_year=next_year
+    )

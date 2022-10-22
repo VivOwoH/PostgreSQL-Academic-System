@@ -15,7 +15,33 @@
             <ul class="pure-menu-list">
                 <li class="pure-menu-item"><a href="{{ url_for('list_units') }}" class="pure-menu-link">All Units</a></li>
                 <li class="pure-menu-item"><a href="{{ url_for('transcript') }}" class="pure-menu-link">Transcript</a></li>
-                <li class="pure-menu-item"><a href="{{ url_for('list_prerequisites') }}" class="pure-menu-link">Prerequisites</a></li>
+
+                <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                  <a href="{{ url_for('list_prerequisites') }}" class="pure-menu-link">Prerequisites</a>
+                  <ul class="pure-menu-children"> 
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('search_prerequisites') }}" class="pure-menu-link">Search</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('report_prerequisites') }}" class="pure-menu-link">Report</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('add_prerequisites') }}" class="pure-menu-link">Add</a>
+                    </li>
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('check_uos_eligibility') }}" class="pure-menu-link">UOS Eligibility</a>
+                    </li>
+                  </ul>  
+                </li>
+
+                <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                  <a href="{{ url_for('list_prohibitions') }}" class="pure-menu-link">Prohibitions</a>
+                  <ul class="pure-menu-children"> 
+                    <li class="pure-menu-item">
+                      <a href="{{ url_for('check_uos_eligibility') }}" class="pure-menu-link">UOS Eligibility</a>
+                    </li>
+                  </ul>  
+                </li>
                 
                 <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                   <a href="{{ url_for('list_lectures') }}" class="pure-menu-link">Lectures</a>

@@ -3,7 +3,7 @@
 from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
-
+import datetime
 
 ################################################################################
 # Connect to the database
@@ -28,7 +28,7 @@ def database_connect():
             password='password_from_config',
             user='y19i2120_unikey')
         '''
-        connection = pg8000.connect(database='y22s2i2120_apok9341',
+        connection = pg8000.connect(database=config['DATABASE']['database'],
                                     user=config['DATABASE']['user'],
                                     password=config['DATABASE']['password'],
                                     host=config['DATABASE']['host'])
@@ -153,9 +153,9 @@ def get_transcript(sid):
 #   4. Allow user to add a new (prerequities, unit) pair to the dataset
 ################################################################################
 
-#   1. UoSCodes	and	names of the two units,	and enforce date
-def list_prerequisites():
-    # Get the database connection and set up the cursor
+# run query function
+def query_result(sql):
+     # Get the database connection and set up the cursor
     conn = database_connect()
     if (conn is None):
         return None
@@ -163,15 +163,9 @@ def list_prerequisites():
     cur = conn.cursor()
     val = None
     try:
-        cur.execute("""SELECT DISTINCT a.uoscode, a.uosname, a.prerequoscode, b.prerequosname, a.enforcedsince
-                        FROM (SELECT uoscode, uosname, prerequoscode, enforcedsince
-                                FROM UniDB.Requires NATURAL JOIN UniDB.UnitOfStudy) a
-                        Join
-                            (SELECT prerequoscode, uosname as prerequosname, enforcedsince
-                                FROM UniDB.Requires JOIN UniDB.UnitOfStudy A ON (prerequoscode=A.uoscode)) b 
-	                    ON a.prerequoscode = b.prerequoscode AND a.enforcedsince=b.enforcedsince
-						ORDER BY a.uoscode, a.prerequoscode""")
+        cur.execute(sql)
         val = cur.fetchall()
+        conn.commit()
     except Exception as e:
         # If there were any errors, we print error details and return a NULL value
         print("Error fetching from database {}".format(e))
@@ -179,6 +173,78 @@ def list_prerequisites():
     cur.close()                     # Close the cursor
     conn.close()                    # Close the connection to the db
     return val
+
+# Extension: prohibitions table -> list prohibition + check uos eligibility
+def list_prohibitions():
+    list_sql = """SELECT DISTINCT a.uoscode, a.uosname, a.prohibuoscode, b.prohibuosname, a.enforcedsince
+                        FROM (SELECT uoscode, uosname, prohibuoscode, enforcedsince
+                                FROM UniDB.Prohibitions NATURAL JOIN UniDB.UnitOfStudy) a
+                        Join
+                            (SELECT prohibuoscode, uosname as prohibuosname, enforcedsince
+                                FROM UniDB.Prohibitions JOIN UniDB.UnitOfStudy A ON (prohibuoscode=A.uoscode)) b 
+	                    ON a.prohibuoscode = b.prohibuoscode AND a.enforcedsince=b.enforcedsince
+						ORDER BY a.uoscode, a.prohibuoscode"""
+    return query_result(list_sql)
+
+def check_uos_eligibility(uoscode, sid):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT uoscode 
+                        FROM UniDB.UnitOfStudy
+                        WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
+        val = cur.fetchall()
+        if val is None or len(val) < 1:
+            return -1 # invalid input: we cannot find this given unit
+
+        cur.execute("""SELECT prohibuoscode
+                    FROM UniDB.Prohibitions
+                    WHERE %s = uoscode
+                    AND prohibuoscode IN (SELECT uosCode
+                                FROM UniDB.transcript
+                                WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
+        val = cur.fetchall()
+        if len(val) > 0:
+            return 0 # have finished a unit that is in prohib list
+
+        cur.execute("""SELECT prerequoscode
+                    FROM UniDB.Requires
+                    WHERE %s = uoscode
+                    AND prerequoscode NOT IN (SELECT uosCode
+                                FROM UniDB.transcript
+                                WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
+        val = cur.fetchall()
+        if len(val) > 0:
+            return 0 # have not finished all prerequisites
+
+        return 1 # pass both prohib and prereq check, can choose this unit
+
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+    
+
+#   1. UoSCodes	and	names of the two units,	and enforce date
+def list_prerequisites():
+    list_sql = """SELECT DISTINCT a.uoscode, a.uosname, a.prerequoscode, b.prerequosname, a.enforcedsince
+                        FROM (SELECT uoscode, uosname, prerequoscode, enforcedsince
+                                FROM UniDB.Requires NATURAL JOIN UniDB.UnitOfStudy) a
+                        Join
+                            (SELECT prerequoscode, uosname as prerequosname, enforcedsince
+                                FROM UniDB.Requires JOIN UniDB.UnitOfStudy A ON (prerequoscode=A.uoscode)) b 
+	                    ON a.prerequoscode = b.prerequoscode AND a.enforcedsince=b.enforcedsince
+						ORDER BY a.uoscode, a.prerequoscode"""
+    return query_result(list_sql)
 
 #   2. Allow user to search for all the units which are prerequisites of a given unit.
 def search_prerequisites(uoscode):
@@ -214,25 +280,10 @@ def search_prerequisites(uoscode):
 
 #   3. Produce a report showing how many prerequisites there are, for each unit of study
 def report_prerequisites():
-    # Get the database connection and set up the cursor
-    conn = database_connect()
-    if (conn is None):
-        return None
-    # Sets up the rows as a dictionary
-    cur = conn.cursor()
-    val = None
-    try:
-        cur.execute("""SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
+    count_sql = """SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
                         FROM UniDB.Requires
-                        GROUP BY uoscode""")
-        val = cur.fetchall()
-    except Exception as e:
-        # If there were any errors, we print error details and return a NULL value
-        print("Error fetching from database {}".format(e))
-
-    cur.close()                     # Close the cursor
-    conn.close()                    # Close the connection to the db
-    return val
+                        GROUP BY uoscode"""
+    return query_result(count_sql)
 
 
 #   4. Allow user to add a new (prerequities, unit) pair to the dataset
@@ -350,85 +401,6 @@ def lectures(func, **kwargs):
     conn.close()                    # Close the connection to the db
     return val
 
-#   2. Allow user to search for all the units which are prerequisites of a given unit.
-def search_prerequisites(uoscode):
-    # Only search using uoscode: case insensitive
-    # Get the database connection and set up the cursor
-    conn = database_connect()
-    conn.autocommit = True
-    if (conn is None):
-        return None
-    # Sets up the rows as a dictionary
-    cur = conn.cursor()
-    val = None
-    try:
-        cur.execute("""SELECT uoscode 
-                        FROM UniDB.UnitOfStudy
-                        WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
-        val = cur.fetchall()
-        if val is None or len(val) < 1:
-            return -1 # we cannot find this given unit
-
-        cur.execute("""SELECT prerequoscode, B.uosname as prerequosname, enforcedsince
-                        FROM UniDB.Requires A JOIN UniDB.UnitOfStudy B ON (prerequoscode=B.uoscode)
-                        WHERE LOWER(A.uoscode) = LOWER(%s)""", (uoscode,))
-        val = cur.fetchall()
-    except Exception as e:
-        # If there were any errors, we print error details and return a NULL value
-        print("Error fetching from database {}".format(e))
-
-    cur.close()                     # Close the cursor
-    conn.close()                    # Close the connection to the db
-    return val
-
-
-#   3. Produce a report showing how many prerequisites there are, for each unit of study
-def report_prerequisites():
-    # Get the database connection and set up the cursor
-    conn = database_connect()
-    if (conn is None):
-        return None
-    # Sets up the rows as a dictionary
-    cur = conn.cursor()
-    val = None
-    try:
-        cur.execute("""SELECT uoscode, COUNT(prerequoscode) as num_of_prerequisites
-                        FROM UniDB.Requires
-                        GROUP BY uoscode""")
-        val = cur.fetchall()
-    except Exception as e:
-        # If there were any errors, we print error details and return a NULL value
-        print("Error fetching from database {}".format(e))
-
-    cur.close()                     # Close the cursor
-    conn.close()                    # Close the connection to the db
-    return val
-
-
-#   4. Allow user to add a new (prerequities, unit) pair to the dataset
-# (uoscode, prereqcode) -> must be in unitOfStudy table already
-def add_prerequisites(uos, prereq):
-    # Get the database connection and set up the cursor
-    conn = database_connect()
-    if (conn is None):
-        return None
-    # Sets up the rows as a dictionary
-    cur = conn.cursor()
-    val = None
-    try:
-        cur.execute("""INSERT INTO UniDB.Requires
-                        VALUES (%s, %s, CURRENT_DATE) 
-                        RETURNING uoscode, prerequoscode""", (uos, prereq))
-        val = cur.fetchall()
-        conn.commit()
-    except Exception as e:
-        # If there were any errors, we print error details and return a NULL value
-        print("Error fetching from database {}".format(e))
-
-    cur.close()                     # Close the cursor
-    conn.close()                    # Close the connection to the db
-    return val
-
 ################################################################################
 # Classrooms
 ################################################################################
@@ -441,7 +413,7 @@ def connect() -> pg8000.Connection:
     config = configparser.ConfigParser()
     config.read('config.ini')
     return pg8000.connect(
-        database=config['DATABASE']['user'],
+        database=config['DATABASE']['database'],
         user=config['DATABASE']['user'],
         password=config['DATABASE']['password'],
         host=config['DATABASE']['host']
@@ -450,13 +422,13 @@ def connect() -> pg8000.Connection:
 def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
     # attempt to connect and then attempt to execute the provided query
     connection = connect()
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    results = resolver(cursor)
-
-    # close the connection to the database before returning the results
-    cursor.close()
-    connection.close()
+    results = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = resolver(cursor)
+        cursor.close()
+    finally: connection.close()
     return results
 
 def classroom_registry():
@@ -481,6 +453,35 @@ def add_classroom(classroom_id: str, seats: int, classroom_type: str) -> bool:
     cursor.close()
     return success
 
+################################################################################
+# Announcements
+################################################################################
+
+
+class Announcement:
+    def __init__(self, row: Tuple[str, datetime.datetime, str, str, str, str]):
+        self.title = row[0]
+        self.date = row[1].strftime("%A %B %d %H:%M:%S %Y")
+        self.author = row[2]
+        self.unitCode = row[3]
+        self.unitName = row[4]
+        self.details = row[5].replace('\\n', '\n')
+
+def list_announcements(semester: int, year: int) -> List[Announcement]:
+    sql_query = f"""
+    SELECT title, date, name as author, uoSCode as code, uosname as unit, details
+      FROM unidb.Announcement as A                                               
+        INNER JOIN unidb.UnitOfStudy as U USING (uoScode)                        
+        INNER JOIN unidb.AcademicStaff ON (author = id)                          
+    WHERE CASE                              
+      WHEN 'S{semester}' = 'S1' THEN EXTRACT(month FROM date) <= 7                
+      WHEN 'S{semester}' = 'S2' THEN EXTRACT(month FROM Date) >= 7                
+      ELSE TRUE                                                                  
+    END AND EXTRACT(year FROM date) = {year}
+    ORDER BY date DESC, title ASC, code ASC
+    """
+    print([ Announcement(row) for row in execute_query(sql_query) ])
+    return [ Announcement(row) for row in execute_query(sql_query) ]
 
 #####################################################
 #  Python code if you run it on it's own as 2tier
