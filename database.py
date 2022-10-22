@@ -461,7 +461,7 @@ class Announcement:
         self.author = row[2]
         self.unitCode = row[3]
         self.unitName = row[4]
-        self.details = row[5]
+        self.details = row[5].replace('\\n', '\n')
 
 def list_announcements(semester: int, year: int, unit: Union[str, None]) -> List[Announcement]:
     sql_query = f"""
