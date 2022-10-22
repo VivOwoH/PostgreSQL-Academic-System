@@ -130,6 +130,74 @@ def list_units():
     page['title'] = 'Units of Study'
     return render_template('units.html', page=page, session=session, units=units)
 
+
+################################################################################
+# Academic Staff page
+################################################################################
+
+# List all the academicstaff [but not the password or salary!]).
+@app.route('/academicstaff/list-academicstaff')
+def list_academicstaff():
+    # Go into the database file and get the list_academicstaff() function
+    academicstaff = database.list_academicstaff()
+
+    if (academicstaff is None):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no staff')
+    page['title'] = 'Academic Staff'
+    return render_template('academicstaff/list-academicstaff.html', page=page, 
+                        session=session, academicstaff=academicstaff)
+
+# Seach for all academicstaff in the department
+@app.route('/academicstaff/search-academicstaff')
+def search_academicstaff():
+    academicstaff = []
+        # Get use input deptid value
+    dept = request.args.get('department')
+    print(dept)
+    academicstaff = database.search_academicstaff(dept)
+    if (academicstaff is None or academicstaff == -1):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no academic staff with that department name')
+     
+    page['title'] = 'Search Academic Staff'
+    return render_template('academicstaff/search-academicstaff.html', page=page, 
+                                    session=session, academicstaff=academicstaff)
+
+# Count Academic Stuff
+@app.route('/academicstaff/count-academicstaff')
+def count_academicstaff():
+    academicstaff = database.count_academicstaff()
+
+    if (academicstaff is None):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no staff')
+    page['title'] = 'Count Academic Staff'
+    return render_template('/academicstaff/count-academicstaff.html', page=page, session=session, academicstaff=academicstaff)
+
+# add a new academicstaff member to the dataset
+@app.route('/academicstaff/add-academicstaff', methods=['POST', 'GET'])
+def add_academicstaff():
+    academicstaff = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        entry = database.add_academicstaff(request.form['id'], request.form['name'], request.form['deptid'], request.form['password'], request.form['address'], request.form['salary'] )
+
+        if (entry is None):
+            flash('Academic Staff is not added')
+            return redirect(url_for('add_academicstaff'))
+        #flash('A new prerequisite {} is added for {}'.format(entry[0][1], entry[0][0]))
+        return redirect(url_for('list_academicstaff'))
+    
+    else:
+        page['title'] = 'Add Academic Staff'
+        return render_template('/academicstaff/add-academicstaff.html', page=page, 
+                                    session=session)
+
+
 ################################################################################
 # Prerequisites page
 ################################################################################

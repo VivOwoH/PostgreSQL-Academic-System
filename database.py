@@ -147,6 +147,110 @@ def get_transcript(sid):
 
 
 ################################################################################
+# Academic Staff
+#   1. List all the academicstaff (showing the id, name, department, address [but not the password or salary!]).
+#   2. Allow the user to search for staff in a particular department.
+#   3. One page should produce a report showing how many staff there are, in each department.
+#   4. Allow the user to add a new academicstaff member to the dataset.
+################################################################################
+
+#   1. List all the academicstaff (showing the id, name, department, address [but not the password or salary!]).
+def list_academicstaff():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""Select id, name, deptid as department, address
+                        from unidb.academicstaff
+                        ORDER BY id""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   2. Allow the user to search for staff in a particular department.
+def search_academicstaff(deptid):
+    # Only search using deptid: case insensitive
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT id, name, deptid 
+                        FROM unidb.academicstaff
+                        WHERE LOWER(deptid) = LOWER(%s)""", (deptid,))
+        val = cur.fetchall()
+        if val is None:
+            return -1 # we cannot find this given unit
+        
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   3. One page should produce a report showing how many staff there are, in each department.
+def count_academicstaff():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT deptid, COUNT(id) as num_of_academicstaff
+                        FROM unidb.academicstaff
+                        GROUP BY deptid""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   4. Allow the user to add a new academicstaff member to the dataset.
+def add_academicstaff(staff_id, staff_name, deptid, password, address, salary):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""INSERT INTO unidb.academicstaff
+                        VALUES (%s, %s, %s, %s, %s, %s) 
+                        RETURNING id, name, deptid, password""", (staff_id, staff_name, deptid, password, address, salary))
+        
+        val = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+    
+
+################################################################################
 # Prerequisites
 #   1. UoSCodes	and	names of the two units,	and enforce date
 #   2. Allow user to search for all the units which are prerequisites of a given unit.
