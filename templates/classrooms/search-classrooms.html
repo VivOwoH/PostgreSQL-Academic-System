@@ -3,11 +3,11 @@
     <div id="container">
         <h1 class="page-title">Search Classrooms</h1>
 
-        <form action="{{ url_for('search_classrooms', seats=seats) }}">
+        <form style="margin-bottom: 1.5em" action="{{ url_for('search_classrooms', seats=seats) }}">
             <label for="seats">Classrooms with more than </label>
-            &nbsp;<input type="text" seats="seats" name="seats" size="4"> seats<br>
-            <button type="submit">Submit</button>
-        </form><br>
+            &nbsp;<input type="text" seats="seats" name="seats" size="4"> seats
+            &nbsp;&nbsp;<button type="submit">Submit</button>
+        </form>
 
         <table class="pure-table">
             <thead>

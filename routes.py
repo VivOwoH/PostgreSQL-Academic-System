@@ -1,5 +1,6 @@
 # Importing the Flask Framework
 
+from typing import Union, List, Tuple
 from modules import *
 from flask import *
 import database
@@ -28,6 +29,9 @@ portchoice = config['FLASK']['port']
 #####################################################
 ##  INDEX
 #####################################################
+
+def coalesce(string: Union[str, None], default: str = '') -> str:
+    return string if string != None else default
 
 # What happens when we go to our website
 @app.route('/')
@@ -125,6 +129,74 @@ def list_units():
         flash('Error, there are no units of study')
     page['title'] = 'Units of Study'
     return render_template('units.html', page=page, session=session, units=units)
+
+
+################################################################################
+# Academic Staff page
+################################################################################
+
+# List all the academicstaff [but not the password or salary!]).
+@app.route('/academicstaff/list-academicstaff')
+def list_academicstaff():
+    # Go into the database file and get the list_academicstaff() function
+    academicstaff = database.list_academicstaff()
+
+    if (academicstaff is None):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no staff')
+    page['title'] = 'Academic Staff'
+    return render_template('academicstaff/list-academicstaff.html', page=page, 
+                        session=session, academicstaff=academicstaff)
+
+# Seach for all academicstaff in the department
+@app.route('/academicstaff/search-academicstaff')
+def search_academicstaff():
+    academicstaff = []
+        # Get use input deptid value
+    dept = request.args.get('department')
+    print(dept)
+    academicstaff = database.search_academicstaff(dept)
+    if (academicstaff is None or academicstaff == -1):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no academic staff with that department name')
+     
+    page['title'] = 'Search Academic Staff'
+    return render_template('academicstaff/search-academicstaff.html', page=page, 
+                                    session=session, academicstaff=academicstaff)
+
+# Count Academic Stuff
+@app.route('/academicstaff/count-academicstaff')
+def count_academicstaff():
+    academicstaff = database.count_academicstaff()
+
+    if (academicstaff is None):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no staff')
+    page['title'] = 'Count Academic Staff'
+    return render_template('/academicstaff/count-academicstaff.html', page=page, session=session, academicstaff=academicstaff)
+
+# add a new academicstaff member to the dataset
+@app.route('/academicstaff/add-academicstaff', methods=['POST', 'GET'])
+def add_academicstaff():
+    academicstaff = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        entry = database.add_academicstaff(request.form['id'], request.form['name'], request.form['deptid'], request.form['password'], request.form['address'], request.form['salary'] )
+
+        if (entry is None):
+            flash('Academic Staff is not added')
+            return redirect(url_for('add_academicstaff'))
+        #flash('A new prerequisite {} is added for {}'.format(entry[0][1], entry[0][0]))
+        return redirect(url_for('list_academicstaff'))
+    
+    else:
+        page['title'] = 'Add Academic Staff'
+        return render_template('/academicstaff/add-academicstaff.html', page=page, 
+                                    session=session)
+
 
 ################################################################################
 # Prerequisites page
@@ -354,29 +426,21 @@ def classroom_summary():
 # add a new classroom to the database
 @app.route('/classroom/add')
 def add_classroom():
-    # attempt to retrieve the classroom summary from the database
-    classrooms = []
-    try:
-        classrooms = database.classroom_registry()
-    except Exception as e: flash('Error retrieving classroom registry')
-
     # attempt to create the classroom if one is specified
     try: 
-        classroom_id = request.args.get('id')
-        seats = request.args.get('seats')
-        classroom_type = request.args.get('type')
-        if classroom_id != None and seats and seats.isdigit() and classroom_type != None:
-            if database.add_classroom(classroom_id, int(seats), classroom_type):
+        if len(request.args) > 0:
+            classroom_type = coalesce(request.args.get('type'))
+            classroom_id = coalesce(request.args.get('id'))
+            seats = coalesce(request.args.get('seats'))
+            if database.add_classroom(classroom_id, seats, classroom_type):
                 flash(f"Successfully created classroom '{classroom_id}'")
                 return redirect("/classroom/registry")
-            else: flash('Error creating classroom')
-    except Exception as e:
-        print(e)
-        flash('Error creating classroom')
+            else: flash('Error creating classroom 123')
+    except Exception as e: flash(str(e))
 
     # prepare the template to display for the page
     page['title'] = 'Classroom Summary'
-    return render_template('/classrooms/add-classroom.html', page=page, session=session, classrooms=classrooms)
+    return render_template('/classrooms/add-classroom.html', page=page, session=session)
 
 # search the classrooms stored in the database
 @app.route('/classroom/search')
@@ -385,11 +449,10 @@ def search_classrooms():
     seats = request.args.get('seats')
     classrooms = []
     try:
-        if seats == None or not seats.isdigit():
-            if seats != None and not seats.isdigit():
-                flash('Invalid number of seats')
-            classrooms = database.classroom_registry()
-        else: classrooms = database.search_classroom(int(seats))
+        if coalesce(seats) != '':
+            classrooms = database.search_classroom(coalesce(seats))
+        else: classrooms = database.classroom_registry()
+    except ValueError as e: flash(str(e))
     except Exception: flash('Error searching for classrooms')
 
     # prepare the template to display for the page
@@ -407,21 +470,16 @@ def current_year() -> str: return str(datetime.date.today().year)
 @app.route('/newsfeed')
 def newsfeed():
     # attempt to retrieve the classroom summary from the database
-    semester = request.args.get('semester') if request.args.get('semester') else current_semester()
-    year = request.args.get('year') if request.args.get('year') else current_year()
-    unit = request.args.get('unit') if request.args.get('unit') != None else ''
+    semester = coalesce(request.args.get('semester'), current_semester())
+    year = coalesce(request.args.get('year'), current_year())
+    unit = coalesce(request.args.get('unit'))
     announcements = []
     previous_year = None
     next_year = None
     try:
-        if not semester or not semester.isdigit():
-            flash(f"Invalid semester provided '{semester}'")
-        elif not year or not year.isdigit():
-            flash(f"Invalid year provided '{year}'")
-        else:
-            previous_year = str(int(year) - 1)
-            next_year = str(int(year) + 1)
-            announcements = database.list_announcements(int(semester), int(year))
+        announcements = database.list_announcements(semester, year)
+        previous_year = str(int(year) - 1)
+        next_year = str(int(year) + 1)
     except Exception as e: flash(str(e))
 
     # build a dictionary with all the unique units that appear the query
@@ -429,10 +487,8 @@ def newsfeed():
     for announcement in announcements:
         units[announcement.unitCode] = announcement.unitName
 
-
     # prepare the template to display for the page
     page['title'] = 'Classroom Summary'
-    print(semester, year)
     return render_template(
         '/newsfeed.html',
         page=page,

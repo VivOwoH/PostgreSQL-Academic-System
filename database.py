@@ -4,6 +4,7 @@ from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
 import datetime
+import re
 
 ################################################################################
 # Connect to the database
@@ -144,6 +145,110 @@ def get_transcript(sid):
     conn.close()                    # Close the connection to the db
     return val
 
+
+################################################################################
+# Academic Staff
+#   1. List all the academicstaff (showing the id, name, department, address [but not the password or salary!]).
+#   2. Allow the user to search for staff in a particular department.
+#   3. One page should produce a report showing how many staff there are, in each department.
+#   4. Allow the user to add a new academicstaff member to the dataset.
+################################################################################
+
+#   1. List all the academicstaff (showing the id, name, department, address [but not the password or salary!]).
+def list_academicstaff():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""Select id, name, deptid as department, address
+                        from unidb.academicstaff
+                        ORDER BY id""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   2. Allow the user to search for staff in a particular department.
+def search_academicstaff(deptid):
+    # Only search using deptid: case insensitive
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT id, name, deptid 
+                        FROM unidb.academicstaff
+                        WHERE LOWER(deptid) = LOWER(%s)""", (deptid,))
+        val = cur.fetchall()
+        if val is None:
+            return -1 # we cannot find this given unit
+        
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   3. One page should produce a report showing how many staff there are, in each department.
+def count_academicstaff():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT deptid, COUNT(id) as num_of_academicstaff
+                        FROM unidb.academicstaff
+                        GROUP BY deptid""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   4. Allow the user to add a new academicstaff member to the dataset.
+def add_academicstaff(staff_id, staff_name, deptid, password, address, salary):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""INSERT INTO unidb.academicstaff
+                        VALUES (%s, %s, %s, %s, %s, %s) 
+                        RETURNING id, name, deptid, password""", (staff_id, staff_name, deptid, password, address, salary))
+        
+        val = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+    
 
 ################################################################################
 # Prerequisites
@@ -297,6 +402,8 @@ def add_prerequisites(uos, prereq):
     cur = conn.cursor()
     val = None
     try:
+        if uos == prereq:
+            return val # reject same input as prerequisites
         cur.execute("""INSERT INTO UniDB.Requires
                         VALUES (%s, %s, CURRENT_DATE) 
                         RETURNING uoscode, prerequoscode""", (uos, prereq))
@@ -424,10 +531,6 @@ def lectures(func, **kwargs):
 # Classrooms
 ################################################################################
 
-# helper functions to execute queries and mutations
-
-DefaultResolver = lambda c: list(c.fetchall())
-
 def connect() -> pg8000.Connection:
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -438,8 +541,11 @@ def connect() -> pg8000.Connection:
         host=config['DATABASE']['host']
     )
 
+DefaultResolver = lambda c: list(c.fetchall())
+NaturalNumber = re.compile('^[1-9]+[0-9]*$')
+ValidString = re.compile('^[A-z0-9_-]+$')
+
 def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
-    # attempt to connect and then attempt to execute the provided query
     connection = connect()
     results = None
     try:
@@ -456,21 +562,28 @@ def classroom_registry():
 def classroom_summary():
     return execute_query("SELECT type, COUNT(*) FROM unidb.classroom GROUP BY type")
 
-def search_classroom(seats: int):
+def search_classroom(seats: str):
+    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
     return execute_query(f"SELECT classroomid, seats, type FROM unidb.classroom WHERE seats > {seats}")
 
-def add_classroom(classroom_id: str, seats: int, classroom_type: str) -> bool:
+def add_classroom(classroom_id: str, seats: str, classroom_type: str):
+    if not ValidString.match(classroom_id): raise ValueError(f"Invalid classroom identifier '{classroom_id}'")
+    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
+    if classroom_type != '' and not ValidString.match(classroom_type):
+        raise ValueError(f"Invalid type of classroom '{classroom_type}'")
+
     connection = connect()
     cursor = connection.cursor()
-    success = True
     try: 
         cursor.execute(f"INSERT INTO unidb.classroom VALUES ('{classroom_id}', {seats}, '{classroom_type}')")
         connection.commit()
-    except Exception: success = False
-
-    connection.close()
-    cursor.close()
-    return success
+    except pg8000.ProgrammingError as error:
+        if error.args[2] == '22001': raise ValueError('Classroom type exceeds 7 letter limit')
+        if error.args[2] == '23505': raise ValueError('Classroom with id already exists')
+        raise error
+    finally:
+        connection.close()
+        cursor.close()
 
 ################################################################################
 # Announcements
@@ -486,20 +599,21 @@ class Announcement:
         self.unitName = row[4]
         self.details = row[5].replace('\\n', '\n')
 
-def list_announcements(semester: int, year: int) -> List[Announcement]:
+def list_announcements(semester: str, year: str) -> List[Announcement]:
+    if not NaturalNumber.match(semester): raise ValueError(f"Invalid semester '{semester}'")
+    if not NaturalNumber.match(year): raise ValueError(f"Invalid year '{year}'")
     sql_query = f"""
     SELECT title, date, name as author, uoSCode as code, uosname as unit, details
       FROM unidb.Announcement as A                                               
         INNER JOIN unidb.UnitOfStudy as U USING (uoScode)                        
         INNER JOIN unidb.AcademicStaff ON (author = id)                          
     WHERE CASE                              
-      WHEN 'S{semester}' = 'S1' THEN EXTRACT(month FROM date) <= 7                
-      WHEN 'S{semester}' = 'S2' THEN EXTRACT(month FROM Date) >= 7                
+      WHEN {semester} = 1 THEN EXTRACT(month FROM date) <= 7                
+      WHEN {semester} = 2 THEN EXTRACT(month FROM Date) >= 7                
       ELSE TRUE                                                                  
     END AND EXTRACT(year FROM date) = {year}
     ORDER BY date DESC, title ASC, code ASC
     """
-    print([ Announcement(row) for row in execute_query(sql_query) ])
     return [ Announcement(row) for row in execute_query(sql_query) ]
 
 #####################################################
