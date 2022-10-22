@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
 import datetime
@@ -47,6 +46,7 @@ def database_connect():
     # Return the connection to use
     return connection
 
+
 ################################################################################
 # Login Function
 #   - This function performs a "SELECT" from the database to check for the
@@ -57,7 +57,7 @@ def database_connect():
 def check_login(sid, pwd):
     # Ask for the database connection, and get the cursor set up
     conn = database_connect()
-    if (conn is None):
+    if(conn is None):
         return None
     cur = conn.cursor()
     try:
@@ -88,7 +88,7 @@ def check_login(sid, pwd):
 def list_units():
     # Get the database connection and set up the cursor
     conn = database_connect()
-    if (conn is None):
+    if(conn is None):
         return None
     # Sets up the rows as a dictionary
     cur = conn.cursor()
@@ -100,9 +100,9 @@ def list_units():
                         FROM UniDB.UoSOffering JOIN UniDB.UnitOfStudy USING (uosCode)
                         ORDER BY uosCode, year, semester""")
         val = cur.fetchall()
-    except Exception as e:
-        # If there were any errors, we print error details and return a NULL value
-        print("Error fetching from database {}".format(e))
+    except:
+        # If there were any errors, we print something nice and return a NULL value
+        print("Error fetching from database")
 
     cur.close()                     # Close the cursor
     conn.close()                    # Close the connection to the db
@@ -131,8 +131,8 @@ def get_transcript(sid):
     cur = conn.cursor()
     val = None
     try:
-        cur.execute("""SELECT uosCode, uosName, credits, year, semester, grade
-                        FROM UniDB.transcript JOIN UniDB.UnitOfStudy USING (uosCode)
+        cur.execute("""SELECT uosCode, year, semester, grade
+                        FROM UniDB.transcript
                         WHERE studid = %s
                         ORDER BY uosCode, year, semester""", (sid,))
         val = cur.fetchall()
@@ -145,12 +145,16 @@ def get_transcript(sid):
     return val
 
 
+#####################################################
+#  Python code if you run it on it's own as 2tier
+#####################################################
+
 ################################################################################
-# Prerequisites
-#   1. UoSCodes	and	names of the two units,	and enforce date
-#   2. Allow user to search for all the units which are prerequisites of a given unit.
-#   3. Produce a report showing how many prerequisites there are, for each unit of study
-#   4. Allow user to add a new (prerequities, unit) pair to the dataset
+# Academic Staff
+#   1. List all the academicstaff (showing the id, name, department, address [but not the password or salary!]).
+#   2. Allow the user to search for staff in a particular department.
+#   3. One page should produce a report showing how many staff there are, in each department.
+#   4. Allow the user to add a new academicstaff member to the dataset.
 ################################################################################
 
 # run query function
@@ -196,9 +200,9 @@ def check_uos_eligibility(uoscode, sid):
     cur = conn.cursor()
     val = None
     try:
-        cur.execute("""SELECT uoscode 
-                        FROM UniDB.UnitOfStudy
-                        WHERE LOWER(uoscode) = LOWER(%s)""", (uoscode,))
+        cur.execute("""SELECT deptid 
+                        FROM unidb.academicstaff
+                        WHERE LOWER(deptid) = LOWER(%s)""", (deptid,))
         val = cur.fetchall()
         if val is None or len(val) < 1:
             return -1 # invalid input: we cannot find this given unit
@@ -297,9 +301,9 @@ def add_prerequisites(uos, prereq):
     cur = conn.cursor()
     val = None
     try:
-        cur.execute("""INSERT INTO UniDB.Requires
-                        VALUES (%s, %s, CURRENT_DATE) 
-                        RETURNING uoscode, prerequoscode""", (uos, prereq))
+        cur.execute("""INSERT INTO unidb.academicstaff
+                        VALUES (%s, %s, %s, %s, %s, %d) 
+                        RETURNING id, name, deptid, address""", (id, name, deptid, address))
         val = cur.fetchall()
         conn.commit()
     except Exception as e:
@@ -309,7 +313,7 @@ def add_prerequisites(uos, prereq):
     cur.close()                     # Close the cursor
     conn.close()                    # Close the connection to the db
     return val
-    
+
 
 ################################################################################
 # Lectures
@@ -485,8 +489,7 @@ def list_announcements(semester: int, year: int) -> List[Announcement]:
 
 
 if (__name__ == '__main__'):
-    print("{}\n{}\n{}".format(
-        "=" * 50, "Welcome to the 2-Tier Python Database", "=" * 50))
+    print("{}\n{}\n{}".format("=" * 50, "Welcome to the 2-Tier Python Database", "=" * 50))
     print("""
 This file is to interact directly with the database.
 We're using the unidb (make sure it's in your database)
@@ -495,3 +498,4 @@ Try to execute some functions:
 check_login('3070799133', 'random_password')
 check_login('3070088592', 'Green')
 list_units()""")
+
