@@ -32,37 +32,35 @@
 <body>
   <div id="wrapper">
     <div id="left" style="padding: 1em;">
-
-
       <div class="pure-menu">
-        <div class="pure-menu pure-menu-horizontal">
+        <div class="pure-menu pure-menu-horizontal" style="width: fit-content; margin: auto;">
           <ul class="pure-menu-list">
             <li class="pure-menu-item">
               <a
                 class="pure-menu-link"
-                href="/newsfeed?year={{ previous_year }}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + unit if unit else '' }}"
+                href="/newsfeed?year={{ previous_year }}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + active_unit if active_unit else '' }}"
               >{{previous_year}}</a>
             </li>
             <span style="margin-left: 2em; margin-right: 2em">{{year}}</span>
             <li class="pure-menu-item">
               <a
                 class="pure-menu-link"
-                href="/newsfeed?year={{next_year}}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + unit if unit else '' }}"
+                href="/newsfeed?year={{next_year}}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + active_unit if active_unit else '' }}"
               >{{next_year}}</a>
             </li>
           </ul>
           <br>
           <ul class="pure-menu-list">
-            <li class="pure-menu-item" style="margin-left: 0.1em">
+            <li class="pure-menu-item">
               <a
                 class="pure-menu-link"
-                href="/newsfeed?year={{year}}&semester=1{{ '&unit=' + unit if unit else '' }}"
+                href="/newsfeed?year={{year}}&semester=1{{ '&unit=' + active_unit if active_unit else '' }}"
               >Semester 1</a>
             </li>
             <li class="pure-menu-item">
               <a
                 class="pure-menu-link"
-                href="/newsfeed?year={{year}}&semester=2{{ '&unit=' + unit if unit else '' }}"
+                href="/newsfeed?year={{year}}&semester=2{{ '&unit=' + active_unit if active_unit else '' }}"
               >Semester 2</a>
             </li>
           </ul>
