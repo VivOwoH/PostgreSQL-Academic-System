@@ -455,6 +455,8 @@ def lectures(func, **kwargs):
         # Query => Enable the user to search classtimes
         if func == "search":
             time = kwargs['time'] # Access the optional dictionary
+            if not ValidString.match(time) and time != "": 
+                raise ValueError(f"Invalid code '{time}'")
             if time is not None: # If a time has been selected, return lectures that run at that classtime
                 cur.execute("""SELECT uoscode, uosname, semester, year, classtime, classroomid 
                             FROM unidb.lecture
@@ -479,8 +481,7 @@ def lectures(func, **kwargs):
         # Query => Return all unique classrooms
         if func == "classid_fkey":
             cur.execute("""SELECT classroomid 
-                            FROM unidb.lecture
-                            GROUP BY classroomid
+                            FROM unidb.classroom
                             ORDER BY classroomid""")
             val = cur.fetchall()
         
@@ -499,6 +500,11 @@ def lectures(func, **kwargs):
             year = kwargs['year']
             time = kwargs['time']
             id = kwargs['id']
+            if not ValidString.match(code): raise ValueError(f"Invalid code '{code}'")
+            if not ValidString.match(sem): raise ValueError(f"Invalid semester '{sem}'")
+            if not NaturalNumber.match(year): raise ValueError(f"Invalid year '{year}'")
+            if not ValidString.match(time): raise ValueError(f"Invalid code '{time}'")
+            if not ValidString.match(id): raise ValueError(f"Invalid code '{id}'")
             success = True
             try:
                 cur.execute(f"INSERT INTO unidb.lecture VALUES ('{code}', '{sem}', '{year}', '{time}', '{id}')")
