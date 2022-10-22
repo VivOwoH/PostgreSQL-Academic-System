@@ -4,6 +4,7 @@ from modules import *
 from flask import *
 import database
 import configparser
+import datetime
 
 
 page = {}
@@ -32,11 +33,10 @@ portchoice = config['FLASK']['port']
 @app.route('/')
 def index():
     # If the user is not logged in, then make them go to the login page
-    if( 'logged_in' not in session or not session['logged_in']):
+    if 'logged_in' not in session or not session['logged_in']:
         return redirect(url_for('login'))
-    page['unikey'] = unikey
-    page['title'] = 'Welcome'
-    return render_template('welcome.html', session=session, page=page)
+    else:
+        return redirect(url_for('newsfeed'))
 
 ################################################################################
 # Login Page
@@ -391,5 +391,50 @@ def search_classrooms():
     return render_template('/classrooms/search-classrooms.html', page=page, session=session, classrooms=classrooms)
 
 ################################################################################
-# 
+# Announcements
 ################################################################################
+
+def current_semester() -> str: return ('2' if datetime.date.today().month > 7 else '1')
+def current_year() -> str: return str(datetime.date.today().year)
+
+# search the classrooms stored in the database
+@app.route('/newsfeed')
+def newsfeed():
+    # attempt to retrieve the classroom summary from the database
+    semester = request.args.get('semester') if request.args.get('semester') else current_semester()
+    year = request.args.get('year') if request.args.get('year') else current_year()
+    unit = request.args.get('unit') if request.args.get('unit') != None else ''
+    announcements = []
+    previous_year = None
+    next_year = None
+    try:
+        if not semester or not semester.isdigit():
+            flash(f"Invalid semester provided '{semester}'")
+        elif not year or not year.isdigit():
+            flash(f"Invalid year provided '{year}'")
+        else:
+            previous_year = str(int(year) - 1)
+            next_year = str(int(year) + 1)
+            announcements = database.list_announcements(int(semester), int(year), unit)
+    except Exception as e: flash(str(e))
+
+    # build a dictionary with all the unique units that appear the query
+    units = {}
+    for announcement in announcements:
+        units[announcement.unitCode] = announcement.unitName
+
+    # prepare the template to display for the page
+    page['title'] = 'Classroom Summary'
+    print(semester, year)
+    return render_template(
+        '/newsfeed.html',
+        page=page,
+        session=session,
+        announcements=announcements,
+        units=units,
+        active_unit=unit,
+        semester=semester,
+        year=year,
+        previous_year=previous_year,
+        next_year=next_year
+    )

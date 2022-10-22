@@ -3,7 +3,7 @@
 from typing import Callable, Union, List, Tuple
 from modules import pg8000
 import configparser
-
+import datetime
 
 ################################################################################
 # Connect to the database
@@ -418,13 +418,13 @@ def connect() -> pg8000.Connection:
 def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
     # attempt to connect and then attempt to execute the provided query
     connection = connect()
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    results = resolver(cursor)
-
-    # close the connection to the database before returning the results
-    cursor.close()
-    connection.close()
+    results = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = resolver(cursor)
+        cursor.close()
+    finally: connection.close()
     return results
 
 def classroom_registry():
@@ -449,6 +449,35 @@ def add_classroom(classroom_id: str, seats: int, classroom_type: str) -> bool:
     cursor.close()
     return success
 
+################################################################################
+# Announcements
+################################################################################
+
+
+class Announcement:
+    def __init__(self, row: Tuple[str, datetime.datetime, str, str, str, str]):
+        self.title = row[0]
+        self.date = row[1].strftime("%A %B %d %H:%M:%S %Y")
+        self.author = row[2]
+        self.unitCode = row[3]
+        self.unitName = row[4]
+        self.details = row[5]
+
+def list_announcements(semester: int, year: int, unit: Union[str, None]) -> List[Announcement]:
+    sql_query = f"""
+    SELECT title, date, name as author, uoSCode as code, uosname as unit, details
+      FROM unidb.Announcement as A                                               
+        INNER JOIN unidb.UnitOfStudy as U USING (uoScode)                        
+        INNER JOIN unidb.AcademicStaff ON (author = id)                          
+    WHERE CASE                              
+      WHEN 'S{semester}' = 'S1' THEN EXTRACT(month FROM date) <= 7                
+      WHEN 'S{semester}' = 'S2' THEN EXTRACT(month FROM Date) >= 7                
+      ELSE TRUE                                                                  
+    END AND EXTRACT(year FROM date) = {year}
+        AND ('{unit or ''}' = '' OR uoSCode = '{unit or ''}')
+    ORDER BY date DESC, title ASC, code ASC
+    """
+    return [ Announcement(row) for row in execute_query(sql_query) ]
 
 #####################################################
 #  Python code if you run it on it's own as 2tier

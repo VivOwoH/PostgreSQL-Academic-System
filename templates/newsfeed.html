@@ -1,0 +1,117 @@
+{% include 'top.html' %}
+<style>
+  #wrapper {
+    display: flex;
+  }
+
+  #left {
+    flex: 0 0 10%;
+    max-width: fit-content;
+  }
+
+  #right {
+    flex: 1;
+  }
+
+  .announcements > div {
+    margin: 1em;
+    border: 5px solid #ECF0F1;
+    display: flex;
+  }
+
+  .announcements > div > div {
+    padding: 1em;
+    box-sizing: border-box;
+    flex: 1;
+  }
+
+  .announcements > div > div:nth-child(1) {
+    flex: 0 0 25%;
+  }
+</style>
+<body>
+  <div id="wrapper">
+    <div id="left" style="padding: 1em;">
+
+
+      <div class="pure-menu">
+        <div class="pure-menu pure-menu-horizontal">
+          <ul class="pure-menu-list">
+            <li class="pure-menu-item">
+              <a
+                class="pure-menu-link"
+                href="/newsfeed?year={{ previous_year }}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + unit if unit else '' }}"
+              >{{previous_year}}</a>
+            </li>
+            <span style="margin-left: 2em; margin-right: 2em">{{year}}</span>
+            <li class="pure-menu-item">
+              <a
+                class="pure-menu-link"
+                href="/newsfeed?year={{next_year}}{{ '&semester=' + semester if semester else '' }}{{ '&unit=' + unit if unit else '' }}"
+              >{{next_year}}</a>
+            </li>
+          </ul>
+          <br>
+          <ul class="pure-menu-list">
+            <li class="pure-menu-item" style="margin-left: 0.1em">
+              <a
+                class="pure-menu-link"
+                href="/newsfeed?year={{year}}&semester=1{{ '&unit=' + unit if unit else '' }}"
+              >Semester 1</a>
+            </li>
+            <li class="pure-menu-item">
+              <a
+                class="pure-menu-link"
+                href="/newsfeed?year={{year}}&semester=2{{ '&unit=' + unit if unit else '' }}"
+              >Semester 2</a>
+            </li>
+          </ul>
+        </div>
+
+        <br>
+
+        <span class="pure-menu-heading">Units of Study</span>
+        <ul class="pure-menu-list">
+          {% for unit in units %}
+            <li class="pure-menu-item{{ ', pure-menu-selected' if unit == active_unit else ''}}">
+              <a
+                class="pure-menu-link"
+                href="/newsfeed?year={{year}}{{ '&semester=' + semester if semester else '' }}&unit={{unit}}"
+              >{{unit}}: {{ units[unit] }}</a>
+            </li>
+          {% endfor %}
+          <li class="pure-menu-item{{ ', pure-menu-selected' if not active_unit else ''}}">
+            <a
+              class="pure-menu-link"
+              href="/newsfeed?year={{year}}{{ '&semester=' + semester if semester else '' }}"
+            >All Units</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div id="right" class="announcements">
+      {% for announcement in announcements %}
+      <div>
+        <div>
+          <div style="font-size: 15px;">
+            <i>{{announcement.unitCode}}<br>{{announcement.unitName}}</i>
+          </div>
+          <div style="font-size: 26px; margin-top: 0.4em; margin-bottom: 0.8em;">
+            {{announcement.title}}
+          </div>
+          <div style="font-size: 13px;">
+            by {{announcement.author}}<br>
+            {{announcement.date}}
+          </div>
+        </div>
+        <div>
+          <p>
+          {{announcement.details}}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
