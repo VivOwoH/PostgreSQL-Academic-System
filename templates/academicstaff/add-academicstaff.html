@@ -1,0 +1,38 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Add New Academic Staff</h1>
+        <br>
+        <table>
+            <tbody>
+                <form class="pure-form pure-form-stacked login" method="POST" action="{{ url_for('add_academicstaff', id=id, name=name, deptid=deptid, password=password, address=address, salary=salary) }}">
+                    
+<!--                 <form action="{{ url_for('add_academicstaff', id=id, name=name, deptid=deptid, password=password) }}"> -->
+                    
+                    <label for="id">Staff ID</label>
+                    &nbsp;<input type="text" id="id" name="id" required><br><br>
+
+			  <label for="name">Staff Name</label>
+                    &nbsp;<input type="text" id="name" name="name" required><br><br>
+
+                    <label for="deptid">Department ID</label>
+                    &nbsp;<input type="text" id="deptid" name="deptid" required><br><br>
+
+                    <label for="password">Password</label>
+                    &nbsp;<input type="text" id="password" name="password"><br><br>
+                    
+                    <label for="address">Address</label>
+                    &nbsp;<input type="text" id="address" name="address"><br><br>
+                    
+                    <label for="salary">Salary</label>
+                    &nbsp;<input type="text" id="salary" name="salary"><br><br>
+
+                    <button type="submit">Submit</button><br><br>
+                </form>
+            </tbody>
+        </table>
+        
+    </div>
+</div>
+</body>
+</html>
