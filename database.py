@@ -463,7 +463,7 @@ class Announcement:
         self.unitName = row[4]
         self.details = row[5].replace('\\n', '\n')
 
-def list_announcements(semester: int, year: int, unit: Union[str, None]) -> List[Announcement]:
+def list_announcements(semester: int, year: int) -> List[Announcement]:
     sql_query = f"""
     SELECT title, date, name as author, uoSCode as code, uosname as unit, details
       FROM unidb.Announcement as A                                               
@@ -474,9 +474,9 @@ def list_announcements(semester: int, year: int, unit: Union[str, None]) -> List
       WHEN 'S{semester}' = 'S2' THEN EXTRACT(month FROM Date) >= 7                
       ELSE TRUE                                                                  
     END AND EXTRACT(year FROM date) = {year}
-        AND ('{unit or ''}' = '' OR uoSCode = '{unit or ''}')
     ORDER BY date DESC, title ASC, code ASC
     """
+    print([ Announcement(row) for row in execute_query(sql_query) ])
     return [ Announcement(row) for row in execute_query(sql_query) ]
 
 #####################################################

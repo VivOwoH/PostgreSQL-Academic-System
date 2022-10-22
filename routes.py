@@ -415,13 +415,14 @@ def newsfeed():
         else:
             previous_year = str(int(year) - 1)
             next_year = str(int(year) + 1)
-            announcements = database.list_announcements(int(semester), int(year), unit)
+            announcements = database.list_announcements(int(semester), int(year))
     except Exception as e: flash(str(e))
 
     # build a dictionary with all the unique units that appear the query
     units = {}
     for announcement in announcements:
         units[announcement.unitCode] = announcement.unitName
+
 
     # prepare the template to display for the page
     page['title'] = 'Classroom Summary'
@@ -430,7 +431,7 @@ def newsfeed():
         '/newsfeed.html',
         page=page,
         session=session,
-        announcements=announcements,
+        announcements=[ a for a in announcements if not unit or a.unitCode == unit ],
         units=units,
         active_unit=unit,
         semester=semester,
