@@ -297,6 +297,8 @@ def add_prerequisites(uos, prereq):
     cur = conn.cursor()
     val = None
     try:
+        if uos == prereq:
+            return val # reject same input as prerequisites
         cur.execute("""INSERT INTO UniDB.Requires
                         VALUES (%s, %s, CURRENT_DATE) 
                         RETURNING uoscode, prerequoscode""", (uos, prereq))
