@@ -1,58 +1,33 @@
 {% include 'top.html' %}
 <div id="content">
     <div id="container">
-        <h1 class="page-title">Add Lectures</h1>
-        <table class="pure-table">
-            <thead>
-                <tr><th>UOS Code</th><th>UOS Name</th><th>Semester</th><th>Year</th><th>Classtime</th><th>Classroom ID</th></tr>
-            </thead>
-            <tbody>
-                {% for lecture in lectures %}
-                    <tr>
-						<td> {{lecture[0]}} </td>
-                        <td> {{lecture[1]}} </td>
-                        <td> {{lecture[2]}} </td>
-                        <td> {{lecture[3]}} </td>
-                        <td> {{lecture[4]}} </td>
-                        <td> {{lecture[5]}} </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
         <h1 class="page-title">Add New Lecture</h1>
-        <table>
-            <tbody>
-
-                <!-- <form action="{{ url_for('search_lectures', time=time) }}">
-                    <label for="time">Search Class Time:</label>
-                    <select value="time" id="time" name="time">
-                        {% for time in timing %}
-                            <option>{{time[0]}}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="submit">
-                </form> -->
-
-                <!-- requirements -  -->
-
-
-
-                <form action="{{ url_for('add_lectures', code=code, sem=sem, year=year, time=time, id=id) }}">
-                    <label for="code">UOS Code:</label>
-                    <input type="text" id="code" name="code">
-                    <label for="sem">Semester:</label>
-                    <input type="text" id="sem" name="sem">
-                    <label for="year">Year:</label>
-                    <input type="text" id="year" name="year">
-                    <label for="time">Class Time:</label>
-                    <input type="text" id="time" name="time">
-                    <label for="id">Classroom ID:</label>
-                    <input type="text" id="id" name="id">
-                    <button type="submit">Submit</button>
-                </form>
-            </tbody>
+        <tbody>
+            <form action="{{ url_for('add_lectures', code=code, id=id, time=time) }}">
+                <label for="code">Select UOS Code: </label>
+                <select value="code" id="code" name="code">
+                    {% for uoscode in uoscode_fkey %}
+                        <option>{{uoscode[0]}}-{{uoscode[1]}}-{{uoscode[2]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="time">Select Class Time: </label>
+                <select value="time" id="time" name="time">
+                    {% for time in timing %}
+                        <option>{{time[0]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="id">Select Classroom Location: </label>
+                <select value="id" id="id" name="id">
+                    {% for classid in classid_fkey %}
+                        <option>{{classid[0]}}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <input type="submit">
             </form>
-        </table>
+        </tbody>
     </div>
 </div>
 </body>

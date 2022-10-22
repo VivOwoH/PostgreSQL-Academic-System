@@ -1,0 +1,22 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Academic Staff</h1>
+        <table class="pure-table">
+            <thead>
+                <tr><th>Department</th><th>Number of Staff</th></tr>
+            </thead>
+            <tbody>
+                {% for instance in sbd %}
+                    <!-- Each row is a link to each individual department staff page -->
+                    <tr class="clickable-tr" onclick="window.location='{{ url_for('department_staff', department_id=instance[0])}}'">
+                        <td>{{instance[0]}}</td>
+                        <td>{{instance[1]}}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -8,9 +8,7 @@
             <input type="text" id="time" name="time">
             <button type="submit">Submit</button>
         </form> -->
-
-        <!-- lecture-classroom id- -->
-        <!-- lecture uoscode semester year -->
+        
         <form action="{{ url_for('search_lectures', time=time) }}">
             <label for="time">Search Class Time:</label>
             <select value="time" id="time" name="time">

@@ -280,25 +280,31 @@ def count_lectures():
 def add_lectures():
     # Retrieve existing lectures
     lectures = []
-    try:
-        lectures = database.lectures("list")
-    except Exception as e: flash('Error retrieving existing lectures')
-    # print(lectures)
-    dict = {
-        'code':request.args.get('code'),
-        'sem':request.args.get('sem'),
-        'year':request.args.get('year'),
-        'time':request.args.get('time'),
-        'id':request.args.get('id')
-        }
-    lectures = database.lectures("add", **dict)
-
+    classid_fkey = database.lectures('classid_fkey')
+    uoscode_fkey = database.lectures('uoscode_fkey')
+    timing = database.lectures('timing')
+    try: 
+        codeSemYear = request.args.get('code').split('-') 
+        dict = {
+            'code':codeSemYear[0],
+            'sem':codeSemYear[1],
+            'year':codeSemYear[2],
+            'time':request.args.get('time'),
+            'id':request.args.get('id')
+            }
+        if database.lectures("add", **dict):
+            flash(f"Successfully Added New Lecture '{dict['code']}' '{dict['sem']}' '{dict['year']}' '{dict['time']}' '{dict['id']}'")
+        else:
+            flash(f"Could Not Add New Lecture '{dict['code']}' '{dict['sem']}' '{dict['year']}' '{dict['time']}' '{dict['id']} - You Cannot Have The Same Lecture In The Same Classroom Location (Albeit Different Times)'")
+    except Exception as e:
+        # This occurs on page refresh
+        pass
     if (lectures is None):
         # Set it to an empty list and show error message
         lectures = []
         flash('Error, there are no lectures')
     page['title'] = 'Lectures'
-    return render_template('/lectures/add-lectures.html', page=page, session=session, lectures=lectures)
+    return render_template('/lectures/add-lectures.html', page=page, session=session, lectures=lectures, classid_fkey=classid_fkey, uoscode_fkey=uoscode_fkey, timing=timing)
 
 # Search lectures
 @app.route('/lectures/search-lectures')
