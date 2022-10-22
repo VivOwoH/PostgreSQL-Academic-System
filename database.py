@@ -310,7 +310,7 @@ def check_uos_eligibility(uoscode, sid):
 
         cur.execute("""SELECT prohibuoscode
                     FROM UniDB.Prohibitions
-                    WHERE %s = uoscode
+                    WHERE LOWER(%s) = LOWER(uoscode)
                     AND prohibuoscode IN (SELECT uosCode
                                 FROM UniDB.transcript
                                 WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
@@ -320,7 +320,7 @@ def check_uos_eligibility(uoscode, sid):
 
         cur.execute("""SELECT prerequoscode
                     FROM UniDB.Requires
-                    WHERE %s = uoscode
+                    WHERE LOWER(%s) = LOWER(uoscode)
                     AND prerequoscode NOT IN (SELECT uosCode
                                 FROM UniDB.transcript
                                 WHERE studid = %s AND grade != 'F')""", (uoscode,sid))
