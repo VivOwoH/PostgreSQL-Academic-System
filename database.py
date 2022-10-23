@@ -249,6 +249,31 @@ def add_academicstaff(staff_id, staff_name, deptid, password, address, salary):
     conn.close()                    # Close the connection to the db
     return val
     
+####################################################################################################################
+# Extension for academic staff to create a table that shows salary of each of the academic staff in ascending order
+####################################################################################################################
+
+def salary_academicstaff():
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""Select id, name, salary
+                        From Unidb.academicstaff
+                        Order by salary asc""")
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+	
 
 ################################################################################
 # Prerequisites
