@@ -551,27 +551,6 @@ DefaultResolver = lambda c: list(c.fetchall())
 NaturalNumber = re.compile('^[1-9]+[0-9]*$')
 ValidString = re.compile('^[A-z0-9_-]+$')
 
-def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
-    connection = connect()
-    results = None
-    try:
-        cursor = connection.cursor()
-        cursor.execute(sql)
-        results = resolver(cursor)
-        cursor.close()
-    finally: connection.close()
-    return results
-
-def classroom_registry():
-    return execute_query("SELECT classroomid, seats, type FROM unidb.classroom")
-
-def classroom_summary():
-    return execute_query("SELECT type, COUNT(*) FROM unidb.classroom GROUP BY type")
-
-def search_classroom(seats: str):
-    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
-    return execute_query(f"SELECT classroomid, seats, type FROM unidb.classroom WHERE seats > {seats}")
-
 def add_classroom(classroom_id: str, seats: str, classroom_type: str):
     if not ValidString.match(classroom_id): raise ValueError(f"Invalid classroom identifier '{classroom_id}'")
     if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
@@ -591,10 +570,30 @@ def add_classroom(classroom_id: str, seats: str, classroom_type: str):
         connection.close()
         cursor.close()
 
+def execute_query(sql: str, resolver = DefaultResolver) -> Union[List[tuple], Tuple]:
+    connection = connect()
+    results = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        results = resolver(cursor)
+        cursor.close()
+    finally: connection.close()
+    return results
+
+def classroom_registry():
+    return execute_query("SELECT classroomid, seats, type FROM unidb.classroom")
+
+def clasrooms_by_type():
+    return execute_query("SELECT type, COUNT(*) FROM unidb.classroom GROUP BY type")
+
+def search_classroom(seats: str):
+    if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
+    return execute_query(f"SELECT classroomid, seats, type FROM unidb.classroom WHERE seats > {seats}")
+
 ################################################################################
 # Announcements
 ################################################################################
-
 
 class Announcement:
     def __init__(self, row: Tuple[str, datetime.datetime, str, str, str, str]):
@@ -610,22 +609,81 @@ def list_announcements(semester: str, year: str) -> List[Announcement]:
     if not NaturalNumber.match(year): raise ValueError(f"Invalid year '{year}'")
     sql_query = f"""
     SELECT title, date, name as author, uoSCode as code, uosname as unit, details
-      FROM unidb.Announcement as A                                               
-        INNER JOIN unidb.UnitOfStudy as U USING (uoScode)                        
-        INNER JOIN unidb.AcademicStaff ON (author = id)                          
-    WHERE CASE                              
-      WHEN {semester} = 1 THEN EXTRACT(month FROM date) <= 7                
-      WHEN {semester} = 2 THEN EXTRACT(month FROM Date) >= 7                
-      ELSE TRUE                                                                  
+      FROM unidb.Announcement as A
+        INNER JOIN unidb.UnitOfStudy as U USING (uoScode)
+        INNER JOIN unidb.AcademicStaff ON (author = id)
+    WHERE CASE
+      WHEN {semester} = 1 THEN EXTRACT(month FROM date) <= 7
+      WHEN {semester} = 2 THEN EXTRACT(month FROM Date) >= 7
+      ELSE TRUE
     END AND EXTRACT(year FROM date) = {year}
     ORDER BY date DESC, title ASC, code ASC
     """
     return [ Announcement(row) for row in execute_query(sql_query) ]
 
+################################################################################
+# Textbooks
+################################################################################
+
+def update_unit_textbook(unit: str, semester: str, year: str, textbook: str):
+    if not ValidString.match(textbook): raise ValueError(f"Invalid textbook '{textbook}'")
+    if not ValidString.match(semester): raise ValueError(f"Invalid semester '{semester}'")
+    if not ValidString.match(unit): raise ValueError(f"Invalid unit code '{unit}'")
+    if not ValidString.match(year): raise ValueError(f"Invalid year '{year}'")
+    sql_query = f"""
+    UPDATE unidb.UoSOffering SET textbook = '{textbook}'
+    WHERE uoSCode = '{unit}'
+        AND year = '{year}'
+        AND semester = '{semester}'
+    """
+
+    connection = connect()
+    cursor = connection.cursor()
+    try: 
+        cursor.execute(sql_query)
+        connection.commit()
+    except pg8000.ProgrammingError as error:
+        # TODO: handle the edge cases here
+        # i.e when semester, unit or textbook strings are too long, just test and use the error
+        # code, for reference see what I did for the add_classroom function.
+        raise error
+    finally:
+        connection.close()
+        cursor.close()
+
+def list_textbooks():
+    sql_query = f"""
+    SELECT uoSCode, semester, year, uoSName, textbook
+    FROM unidb.UoSOffering
+        INNER JOIN unidb.UnitOfStudy USING (uoSCode)
+    ORDER BY year DESC, semester DESC, uoSName
+    """
+    return execute_query(sql_query)
+
+def search_units_with_textbook(textbook: str):
+    if not ValidString.match(textbook): raise ValueError(f"Invalid textbook '{textbook}'")
+    sql_query = f"""
+    SELECT uoSCode, semester, year, uoSName
+    FROM unidb.UoSOffering
+        INNER JOIN unidb.UnitOfStudy USING (uoSCode)
+    WHERE textbook = '{textbook}'
+    ORDER BY year DESC, semester DESC, uoSName
+    """
+    return execute_query(sql_query)
+
+def units_by_textbook():
+    sql_query = f"""
+    SELECT textbook, COUNT(*) as count
+    FROM unidb.UoSOffering
+        INNER JOIN unidb.UnitOfStudy USING (uoSCode)
+    GROUP BY textbook
+    ORDER BY count DESC, textbook
+    """
+    return execute_query(sql_query)
+
 #####################################################
 #  Python code if you run it on it's own as 2tier
 #####################################################
-
 
 if (__name__ == '__main__'):
     print("{}\n{}\n{}".format(

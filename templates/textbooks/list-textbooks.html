@@ -1,0 +1,28 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Textbooks</h1>
+        <table class="pure-table">
+            <thead>
+                <tr>
+                    <th>Unit of Study Code</th>
+                    <th>Semester</th>
+                    <th>Year</th>
+                    <th>Unit of Study Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unit in units %}
+                <tr>
+                    <td> {{unit[0]}} </td>
+                    <td> {{unit[1]}} </td>
+                    <td> {{unit[2]}} </td>
+                    <td> {{unit[2]}} </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

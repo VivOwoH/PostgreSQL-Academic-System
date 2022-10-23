@@ -416,7 +416,7 @@ def classroom_summary():
     # attempt to retrieve the classroom summary from the database
     classrooms = []
     try:
-        classrooms = database.classroom_summary()
+        classrooms = database.clasrooms_by_type()
     except Exception as e: flash('Error accessing the classroom summary')
 
     # prepare the template to display for the page
@@ -501,3 +501,37 @@ def newsfeed():
         previous_year=previous_year,
         next_year=next_year
     )
+
+################################################################################
+# Textbooks
+################################################################################
+
+# list all of the classrooms stored in the database
+@app.route('/textbooks/list')
+def list_textbooks():
+    # attempt to retrieve the classroom registry from the database
+    units = []
+    try:
+        units = database.list_textbooks()
+    except Exception as e:
+        print(e.with_traceback)
+        flash(str(e))
+
+    # prepare the template to display for the page
+    page['title'] = 'List of Textbooks'
+    return render_template('/textbooks/list-textbooks.html', page=page, session=session, units=units)
+
+# list all of the classrooms stored in the database
+@app.route('/textbooks/summary')
+def units_by_textbook():
+    # attempt to retrieve the classroom registry from the database
+    units = []
+    try:
+        units = database.units_by_textbook()
+    except Exception as e:
+        print(e.with_traceback)
+        flash(str(e))
+
+    # prepare the template to display for the page
+    page['title'] = 'Textbook Summary'
+    return render_template('/textbooks/textbook-summary.html', page=page, session=session, units=units)
