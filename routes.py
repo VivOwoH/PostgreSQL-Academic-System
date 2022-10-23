@@ -197,7 +197,21 @@ def add_academicstaff():
         return render_template('/academicstaff/add-academicstaff.html', page=page, 
                                     session=session)
 
+# Extensions for academic staff page 
+# List all the academicstaff and their salary
+@app.route('/academicstaff/salary-academicstaff')
+def salary_academicstaff():
+    # Go into the database file and get the list_academicstaff() function
+    academicstaff = database.salary_academicstaff()
 
+    if (academicstaff is None):
+        # Set it to an empty list and show error message
+        academicstaff = []
+        flash('Error, there are no staff')
+    page['title'] = 'Salary Academic Staff'
+    return render_template('academicstaff/salary-academicstaff.html', page=page, 
+                        session=session, academicstaff=academicstaff)
+    
 ################################################################################
 # Prerequisites page
 ################################################################################
