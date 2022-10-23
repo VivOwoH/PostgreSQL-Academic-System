@@ -424,21 +424,20 @@ def classroom_summary():
     return render_template('/classrooms/classroom-summary.html', page=page, session=session, classrooms=classrooms)
 
 # add a new classroom to the database
-@app.route('/classroom/add')
+@app.route('/classroom/add', methods=['POST', 'GET'])
 def add_classroom():
-    # attempt to create the classroom if one is specified
-    try: 
-        if len(request.args) > 0:
-            classroom_type = coalesce(request.args.get('type'))
-            classroom_id = coalesce(request.args.get('id'))
-            seats = coalesce(request.args.get('seats'))
-            if database.add_classroom(classroom_id, seats, classroom_type):
-                flash(f"Successfully created classroom '{classroom_id}'")
-                return redirect("/classroom/registry")
-            else: flash('Error creating classroom 123')
-    except Exception as e: flash(str(e))
+    if request.method == 'POST':
+        try: 
+            classroom_type = coalesce(request.form.get('type'))
+            classroom_id = coalesce(request.form.get('id'))
+            seats = coalesce(request.form.get('seats'))
+            database.add_classroom(classroom_id, seats, classroom_type)
+            flash(f"Successfully created classroom '{classroom_id}'")
+            return redirect("/classroom/registry")
+        except Exception as e:
+            print(e.with_traceback)
+            flash(str(e))
 
-    # prepare the template to display for the page
     page['title'] = 'Classroom Summary'
     return render_template('/classrooms/add-classroom.html', page=page, session=session)
 

@@ -5,7 +5,8 @@
         <br>
         <table>
             <tbody>
-                <form action="{{ url_for('add_classroom', id=id, seats=seats, type=type) }}">
+
+                <form method="POST" action="{{ url_for('add_classroom') }}">
                     <label for="id">Classroom ID</label>
                     &nbsp;<input type="text" id="id" name="id"><br><br>
 

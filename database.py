@@ -549,21 +549,24 @@ def connect() -> pg8000.Connection:
 
 DefaultResolver = lambda c: list(c.fetchall())
 NaturalNumber = re.compile('^[1-9]+[0-9]*$')
-ValidString = re.compile('^[A-z0-9_-]+$')
+ValidString = re.compile('^[A-z0-9_-]*$')
 
 def add_classroom(classroom_id: str, seats: str, classroom_type: str):
+    print(classroom_id, seats, classroom_type)
     if not ValidString.match(classroom_id): raise ValueError(f"Invalid classroom identifier '{classroom_id}'")
     if not NaturalNumber.match(seats): raise ValueError(f"Invalid number of seats '{seats}'")
-    if classroom_type != '' and not ValidString.match(classroom_type):
+    if not ValidString.match(classroom_type):
         raise ValueError(f"Invalid type of classroom '{classroom_type}'")
 
     connection = connect()
     cursor = connection.cursor()
     try: 
-        cursor.execute(f"INSERT INTO unidb.classroom VALUES ('{classroom_id}', {seats}, '{classroom_type}')")
+        cursor.execute(f"INSERT INTO unidb.classroom VALUES (upper('{classroom_id}'), {seats}, '{classroom_type}')")
         connection.commit()
     except pg8000.ProgrammingError as error:
-        if error.args[2] == '22001': raise ValueError('Classroom type exceeds 7 letter limit')
+        if error.args[2] == '22001':
+            if error.args[3].endswith('(7)'): raise ValueError('Classroom type exceeds 7 letter limit')
+            if error.args[3].endswith('(8)'): raise ValueError('Classroom id exceeds 8 letter limit')
         if error.args[2] == '23505': raise ValueError('Classroom with id already exists')
         raise error
     finally:
