@@ -92,19 +92,16 @@
                 </li>
 
                 <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
-                  <a href="{{ url_for('list_textbooks') }}" class="pure-menu-link">Textbooks</a>
+                  <a href="{{ url_for('list_textbooks') }}" class="pure-menu-link">Textbook</a>
                   <ul class="pure-menu-children"> 
                     <li class="pure-menu-item">
-                      <a href="{{ url_for('list_textbooks') }}" class="pure-menu-link">List</a>
+                      <a href="{{ url_for('search_textbook') }}" class="pure-menu-link">Search</a>
                     </li>
                     <li class="pure-menu-item">
                       <a href="{{ url_for('units_by_textbook') }}" class="pure-menu-link">Summary</a>
                     </li>
                     <li class="pure-menu-item">
-                      <a href="{{ url_for('list_textbooks') }}" class="pure-menu-link">Search</a>
-                    </li>
-                    <li class="pure-menu-item">
-                      <a href="{{ url_for('list_textbooks') }}" class="pure-menu-link">Update</a>
+                      <a href="{{ url_for('update_textbook') }}" class="pure-menu-link">Update</a>
                     </li>
                   </ul>  
                 </li>

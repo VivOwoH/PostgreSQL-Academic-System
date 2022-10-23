@@ -1,0 +1,32 @@
+{% include 'top.html' %}
+<div id="content">
+    <div id="container">
+        <h1 class="page-title">Search textbook</h1>
+
+        <form class="pure-form pure-form-stacked login" method="POST" action="{{ url_for('search_textbook') }}">
+            <h4>Search all UOS using a textbook:</h4>
+            <input type="text" name="textbook" placeholder="Name of textbook" required>
+            <input class="pure-button pure-button-primary" type="submit">
+        </form>
+        <br></br>
+        
+        <table class="pure-table">
+            <thead>
+                <tr><th>UOS Code</th><th>Semester</th><th>Year</th><th>UOS Name</th><th>Textbook</th></tr>
+            </thead>
+            <tbody>
+                {% for unit in uos %}
+                    <tr>
+						<td> {{unit[0]}}</td>
+                        <td> {{unit[1]}} </td>
+                        <td> {{unit[2]}} </td>
+                        <td> {{unit[3]}} </td>
+                        <td> {{unit[4]}} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

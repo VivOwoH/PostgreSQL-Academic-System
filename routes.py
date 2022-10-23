@@ -506,10 +506,9 @@ def newsfeed():
 # Textbooks
 ################################################################################
 
-# list all of the classrooms stored in the database
+# List uos and textbooks
 @app.route('/textbooks/list')
 def list_textbooks():
-    # attempt to retrieve the classroom registry from the database
     units = []
     try:
         units = database.list_textbooks()
@@ -521,7 +520,7 @@ def list_textbooks():
     page['title'] = 'List of Textbooks'
     return render_template('/textbooks/list-textbooks.html', page=page, session=session, units=units)
 
-# list all of the classrooms stored in the database
+# Report the number of uos for each txtbook
 @app.route('/textbooks/summary')
 def units_by_textbook():
     # attempt to retrieve the classroom registry from the database
@@ -535,3 +534,56 @@ def units_by_textbook():
     # prepare the template to display for the page
     page['title'] = 'Textbook Summary'
     return render_template('/textbooks/textbook-summary.html', page=page, session=session, units=units)
+
+# Seach for all uos by given textbook
+@app.route('/textbook/search-textbook', methods=['POST', 'GET'])
+def search_textbook():
+    uos = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        uos = database.search_textbook(request.form['textbook'])
+
+        # If our database connection gave back code -1
+        if(uos == -1):
+            flash("We cannot find this book. Or there are no uos using this textbook.")
+            return redirect(url_for('list_textbooks'))
+
+        else:
+            if (uos is None):
+                # Set it to an empty list and show error message
+                uos = []
+                flash('Error, there are no uos offering.')
+            page['title'] = 'Search UOS by Textbook'
+            return render_template('/textbooks/searchTextbook.html', page=page, 
+                                    session=session, uos=uos)
+    else:
+        page['title'] = 'Search UOS by Textbook'
+        return render_template('/textbooks/searchTextbook.html', page=page, 
+                                    session=session, uos=uos)
+
+# Update a textbook for a given unit
+@app.route('/textbooks/update-textbook', methods=['POST', 'GET'])
+def update_textbook():
+    textbook = []
+    # If it's a post method handle it nicely
+    if(request.method == 'POST'):
+        # Get use input uoscode value
+        entry = database.update_textbook(request.form['uos'], request.form['textbook'])
+
+        # If our database connection gave back code -1
+        if(entry == -1):
+            flash("We cannot find this book. Or there are no uos using this textbook.")
+            return redirect(url_for('update_textbook'))
+
+        elif (entry is None):
+            flash('Textbook not updated')
+            return redirect(url_for('update_textbook'))
+
+        flash('A new textbook {} is updated for {}'.format(entry[0][1], entry[0][0]))
+        return redirect(url_for('list_textbooks'))
+    
+    else:
+        page['title'] = 'Add prerequisites'
+        return render_template('/textbooks/updateTextbook.html', page=page, 
+                                    session=session)

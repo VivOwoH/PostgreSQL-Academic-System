@@ -625,32 +625,7 @@ def list_announcements(semester: str, year: str) -> List[Announcement]:
 # Textbooks
 ################################################################################
 
-def update_unit_textbook(unit: str, semester: str, year: str, textbook: str):
-    if not ValidString.match(textbook): raise ValueError(f"Invalid textbook '{textbook}'")
-    if not ValidString.match(semester): raise ValueError(f"Invalid semester '{semester}'")
-    if not ValidString.match(unit): raise ValueError(f"Invalid unit code '{unit}'")
-    if not ValidString.match(year): raise ValueError(f"Invalid year '{year}'")
-    sql_query = f"""
-    UPDATE unidb.UoSOffering SET textbook = '{textbook}'
-    WHERE uoSCode = '{unit}'
-        AND year = '{year}'
-        AND semester = '{semester}'
-    """
-
-    connection = connect()
-    cursor = connection.cursor()
-    try: 
-        cursor.execute(sql_query)
-        connection.commit()
-    except pg8000.ProgrammingError as error:
-        # TODO: handle the edge cases here
-        # i.e when semester, unit or textbook strings are too long, just test and use the error
-        # code, for reference see what I did for the add_classroom function.
-        raise error
-    finally:
-        connection.close()
-        cursor.close()
-
+#   1. List all UOS (uoscode, semester, year, unit_name) and textbook.
 def list_textbooks():
     sql_query = f"""
     SELECT uoSCode, semester, year, uoSName, textbook
@@ -660,17 +635,38 @@ def list_textbooks():
     """
     return execute_query(sql_query)
 
-def search_units_with_textbook(textbook: str):
-    if not ValidString.match(textbook): raise ValueError(f"Invalid textbook '{textbook}'")
-    sql_query = f"""
-    SELECT uoSCode, semester, year, uoSName
-    FROM unidb.UoSOffering
-        INNER JOIN unidb.UnitOfStudy USING (uoSCode)
-    WHERE textbook = '{textbook}'
-    ORDER BY year DESC, semester DESC, uoSName
-    """
-    return execute_query(sql_query)
+#   2. Search uos by 1 textbook
+def search_textbook(txt):
+    # Only search using uoscode: case insensitive
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    conn.autocommit = True
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT textbook 
+                        FROM UniDB.uosoffering
+                        WHERE LOWER(textbook) = LOWER(%s)""", (txt,))
+        val = cur.fetchall()
+        if val is None or len(val) < 1:
+            return -1 # we cannot find this book
 
+        cur.execute("""SELECT A.uoscode, semester, year, uosname, textbook
+                        FROM UniDB.uosoffering A NATURAL JOIN UniDB.UnitOfStudy B
+                        WHERE LOWER(textbook) = LOWER(%s)""", (txt,))
+        val = cur.fetchall()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
+
+#   3. Count how many uos for each textbook
 def units_by_textbook():
     sql_query = f"""
     SELECT textbook, COUNT(*) as count
@@ -680,6 +676,38 @@ def units_by_textbook():
     ORDER BY count DESC, textbook
     """
     return execute_query(sql_query)
+
+#   4. Change textbook for a given uos
+#   We are only updating, not adding
+def update_textbook(uos, txt):
+    # Get the database connection and set up the cursor
+    conn = database_connect()
+    if (conn is None):
+        return None
+    # Sets up the rows as a dictionary
+    cur = conn.cursor()
+    val = None
+    try:
+        cur.execute("""SELECT uoscode, semester, year
+                        FROM UniDB.uosoffering
+                        WHERE LOWER(uoscode) = LOWER(%s)""", (uos,))
+        val = cur.fetchall()
+        if val is None or len(val) < 1:
+            return -1 # this uos not in list of uosoffering
+
+        cur.execute("""UPDATE UniDB.uosoffering
+                        SET textbook = %s
+                        WHERE LOWER(uoscode) = LOWER(%s)
+                        RETURNING uoscode, textbook""", (txt, uos))
+        val = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        # If there were any errors, we print error details and return a NULL value
+        print("Error fetching from database {}".format(e))
+
+    cur.close()                     # Close the cursor
+    conn.close()                    # Close the connection to the db
+    return val
 
 #####################################################
 #  Python code if you run it on it's own as 2tier
