@@ -517,7 +517,7 @@ def lectures(func, **kwargs):
 
         # Extension: Query => Display lecture duration
         if func == "duration":
-            cur.execute("""SELECT uoscode, semester, year, duration
+            cur.execute("""SELECT duration.uoscode, duration.semester, duration.year, duration.duration
                             FROM unidb.lecture lecture
                             JOIN unidb.duration duration
                             ON duration.uoscode = lecture.uoscode
